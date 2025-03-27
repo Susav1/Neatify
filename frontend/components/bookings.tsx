@@ -1,36 +1,99 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  ActivityIndicator 
+} from 'react-native';
+import api from '@/services/api';
+
+type Booking = {
+  id: string;
+  serviceType: string;
+  date: string;
+  status: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+};
+
+// Define BookingCard as a separate component
+const BookingCard = ({ booking }: { booking: Booking }) => (
+  <View style={styles.bookingCard}>
+    <Text style={styles.bookingName}>{booking.serviceType}</Text>
+    <Text style={styles.bookingDate}>Date: {booking.date}</Text>
+    <Text style={[
+      styles.bookingStatus, 
+      booking.status === 'CANCELLED' && styles.cancelledStatus
+    ]}>
+      Status: {booking.status}
+    </Text>
+  </View>
+);
 
 const Bookings = () => {
   const [activeTab, setActiveTab] = useState<'Past' | 'Active' | 'Cancelled'>('Active');
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock cleaning service bookings
-  const bookings = {
-    Past: [
-      { id: '1', serviceType: 'Home Deep Cleaning', date: '2024-02-10', status: 'Completed' },
-      { id: '2', serviceType: 'Office Cleaning', date: '2024-01-25', status: 'Completed' },
-    ],
-    Active: [
-      { id: '3', serviceType: 'Carpet Cleaning', date: '2024-03-05', status: 'Upcoming' },
-      { id: '4', serviceType: 'Sofa Cleaning', date: '2024-03-12', status: 'Upcoming' },
-    ],
-    Cancelled: [
-      { id: '5', serviceType: 'Move-in Cleaning', date: '2024-02-01', status: 'Cancelled' },
-    ],
-  };
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await api.get('/bookings');
+        const formattedBookings = response.data.map((b: any) => ({
+          id: b.id,
+          serviceType: b.service?.name || 'Unknown Service',
+          date: new Date(b.date).toLocaleDateString(),
+          status: b.status,
+        }));
+        setBookings(formattedBookings);
+      } catch (error) {
+        console.error('Failed to fetch bookings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
+  if (loading) {
+    return <ActivityIndicator size="large" style={styles.loader} />;
+  }
+
+  const filteredBookings = bookings.filter((b) => {
+    if (activeTab === 'Past') return b.status === 'COMPLETED';
+    if (activeTab === 'Active') return b.status === 'PENDING';
+    if (activeTab === 'Cancelled') return b.status === 'CANCELLED';
+    return false;
+  });
 
   return (
     <View style={styles.container}>
       {/* Tabs */}
       <View style={styles.tabContainer}>
-        <TabButton title="Past" active={activeTab === 'Past'} onPress={() => setActiveTab('Past')} />
-        <TabButton title="Active" active={activeTab === 'Active'} onPress={() => setActiveTab('Active')} />
-        <TabButton title="Cancelled" active={activeTab === 'Cancelled'} onPress={() => setActiveTab('Cancelled')} />
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'Past' && styles.activeTabButton]}
+          onPress={() => setActiveTab('Past')}
+        >
+          <Text style={[styles.tabText, activeTab === 'Past' && styles.activeTabText]}>Past</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'Active' && styles.activeTabButton]}
+          onPress={() => setActiveTab('Active')}
+        >
+          <Text style={[styles.tabText, activeTab === 'Active' && styles.activeTabText]}>Active</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'Cancelled' && styles.activeTabButton]}
+          onPress={() => setActiveTab('Cancelled')}
+        >
+          <Text style={[styles.tabText, activeTab === 'Cancelled' && styles.activeTabText]}>Cancelled</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Booking List */}
       <ScrollView style={styles.bookingList}>
-        {bookings[activeTab].map((booking) => (
+        {filteredBookings.map((booking) => (
           <BookingCard key={booking.id} booking={booking} />
         ))}
       </ScrollView>
@@ -38,30 +101,17 @@ const Bookings = () => {
   );
 };
 
-// Tab Button Component
-const TabButton = ({ title, active, onPress }: { title: string; active: boolean; onPress: () => void }) => (
-  <TouchableOpacity
-    style={[styles.tabButton, active && styles.activeTabButton]}
-    onPress={onPress}
-  >
-    <Text style={[styles.tabText, active && styles.activeTabText]}>{title}</Text>
-  </TouchableOpacity>
-);
-
-// Booking Card Component
-const BookingCard = ({ booking }: { booking: { id: string; serviceType: string; date: string; status: string } }) => (
-  <View style={styles.bookingCard}>
-    <Text style={styles.bookingName}>{booking.serviceType}</Text>
-    <Text style={styles.bookingDate}>Date: {booking.date}</Text>
-    <Text style={[styles.bookingStatus, booking.status === 'Cancelled' && styles.cancelledStatus]}>
-      Status: {booking.status}
-    </Text>
-  </View>
-);
-
-// Styles
+// Complete StyleSheet
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F7F7F7', padding: 16 },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F7F7F7', 
+    padding: 16 
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -109,10 +159,10 @@ const styles = StyleSheet.create({
   },
   bookingStatus: {
     fontSize: 14,
-    color: '#4CAF50', // Green for active/completed
+    color: '#4CAF50',
   },
   cancelledStatus: {
-    color: '#F44336', // Red for cancelled
+    color: '#F44336',
   },
 });
 

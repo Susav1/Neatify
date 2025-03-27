@@ -42,4 +42,10 @@ api.interceptors.response.use(
   }
 );
 
+export const setAuthTokens = async (token: string, refreshToken: string) => {
+  await secureStore.setItem(ACCESS_TOKEN_KEY, token);
+  await secureStore.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  api.defaults.headers.common.Authorization = `Bearer ${token}`;
+};
+
 export default api;

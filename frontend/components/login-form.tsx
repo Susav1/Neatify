@@ -21,8 +21,6 @@ const LoginForm = () => {
   });
 
   const { onLogin } = useAuth();
-
-  // State to toggle password visibility
   const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = (data: LoginFormData) => {
@@ -78,13 +76,13 @@ const LoginForm = () => {
               onChangeText={onChange}
               placeholder="Password"
               value={value}
-              secureTextEntry={!showPassword}  // Toggle visibility
+              secureTextEntry={!showPassword}  
               mode="outlined"
               style={styles.input}
             />
             <IconButton
-              icon={showPassword ? 'eye-off' : 'eye'}  // Toggle icon
-              onPress={() => setShowPassword(!showPassword)}  // Toggle password visibility
+              icon={showPassword ? 'eye-off' : 'eye'} 
+              onPress={() => setShowPassword(!showPassword)}  
               size={24}
               style={styles.eyeIcon}
             />

@@ -1,32 +1,23 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+// const mongoose = require("mongoose");
 
-class User {
-  static async create(user) {
-    try {
-      const createdUser = await prisma.user.create({
-        data: {
-          email: user.email,
-          password: user.password,
-          role: user.role,
-        },
-      });
-      return createdUser;
-    } catch (error) {
-      throw error;
-    }
-  }
+// const UserSchema = new mongoose.Schema({
+//   email: { type: String, required: true, unique: true },
+//   password: { type: String, required: true },
+//   role: { type: String, default: "user" },
+// });
 
-  static async findByEmail(email) {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
-      return user;
-    } catch (error) {
-      throw error;
-    }
-  }
-}
+// module.exports = mongoose.model("User", UserSchema);
 
-module.exports = User;
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phoneNumber: { type: String, required: true },
+  profilePicture: { type: String, default: '' },
+  role: { type: String, enum: ['user', 'serviceProvider', 'admin'], default: 'user' }, // Added role
+  createdAt: { type: Date, default: Date.now },
+});
+
+module.exports = mongoose.model('User', userSchema);

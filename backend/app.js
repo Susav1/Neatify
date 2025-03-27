@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const { config } = require("./config");
 const cors = require("cors");
 const prisma = require("./prisma/prisma");
+const bookingRouter = require('./routes/bookingRouter');
 
 
 app.use(cookieParser());
@@ -24,4 +25,4 @@ app.listen(port, () => {
 
 const adminRoutes = require("./routes/adminRouter");
 app.use("/admin", adminRoutes);
-
+app.use("/api/bookings", bookingRouter);

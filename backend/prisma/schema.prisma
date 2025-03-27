@@ -1,20 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["mongoDb"]
+}
+
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
+  referentialIntegrity = "prisma"
 }
 
 model User {
-  id         Int     @id @default(autoincrement())
-  email      String  @unique
-  fullName   String?
-  profilePic String?
-  password   String
-  role       String? @default("USER")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  email     String    @unique
+  password  String
+  name      String?
+  role      Role      @default(User)
+  bookings  Booking[] // User's bookings
+  services  Service[] // If user is a cleaner
+  reviews   Review[]  // Reviews left by this user
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
+model Booking {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  serviceId String   @db.ObjectId
+  service   Service  @relation(fields: [serviceId], references: [id])
+  date      DateTime
+  status    BookingStatus @default(PENDING)
+  address   String   // Where the cleaning will happen
+  notes     String?  // Special instructions
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
-generator client {
-  provider = "prisma-client-js"
+model Service {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   // e.g., "Deep Cleaning"
+  description String?
+  price       Float
+  duration    Int      // Duration in minutes
+  cleanerId   String   @db.ObjectId // Who provides this service
+  cleaner     User     @relation(fields: [cleanerId], references: [id])
+  bookings    Booking[]
+  reviews     Review[]
+  createdAt   DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating    Int      // 1-5 stars
+  comment   String?
+  userId    String   @db.ObjectId // Who left the review
+  user      User     @relation(fields: [userId], references: [id])
+  serviceId String   @db.ObjectId
+  service   Service  @relation(fields: [serviceId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  User
+  Admin
+  Cleaner
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
 }

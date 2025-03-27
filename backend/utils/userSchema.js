@@ -14,7 +14,8 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
-  role: z.string().optional(),
+  role: z.string().optional().default("user"),
 });
 
 module.exports = { userSchema, loginSchema, registerSchema };
+

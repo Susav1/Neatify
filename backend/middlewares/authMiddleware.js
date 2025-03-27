@@ -5,7 +5,7 @@ const authorizeRole = (role) => {
   return (req, res, next) => {
     const userId = req.user.id;
     if (req.user.role === role) {
-      req.userId = userId;
+      req.userId = userId; 
       next();
     } else {
       res.status(401).json({ message: "Unauthorized" });
@@ -38,9 +38,9 @@ const authenticateToken = (req, res, next) => {
 };
 
 const logout = (req, res) => {
-  // Clear the token cookie by setting it to an empty value and expiring it immediately
   res.cookie("jwt_cookie", "", { expires: new Date(0) });
   res.status(200).json({ message: "Logout successful" });
 };
+
 
 module.exports = { authenticateToken, authorizeRole, logout };

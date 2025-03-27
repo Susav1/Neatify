@@ -23,7 +23,6 @@ const RegisterForm = () => {
     mutationFn: signUp,
   });
 
-  // State to toggle password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
