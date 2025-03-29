@@ -1,12 +1,11 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { PrismaClient } = require("@prisma/client");
 const { loginSchema, registerSchema } = require("../utils/userSchema");
 const { config } = require("../config");
+const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 const registerUser = async (req, res) => {
-  console.log("backend");
   try {
     const validationResult = registerSchema.safeParse(req.body);
     if (!validationResult.success) {
@@ -23,24 +22,24 @@ const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
 
-    const user = await prisma?.user?.create({
-      data: {  
+    const user = await prisma.user.create({
+      data: {
         email: req.body.email,
         password: hashedPassword,
-        role: req.body.role || 'user', 
-      }
+        role: req.body.role,
+        name: req.body.name,
+      },
     });
 
     res.status(201).json({ user });
   } catch (error) {
-    console.error("Registration error:", error); 
-    res.status(500).json({ 
-      message: "Internal server error", 
-      error: error.message 
+    console.error("Registration error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
     });
   }
 };
-
 
 const loginUser = async (req, res) => {
   try {
@@ -72,34 +71,13 @@ const loginUser = async (req, res) => {
 
     res.status(200).json({ message: "Login successful", token });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
-};
-
-exports.registerUser = async (req, res) => {
-  const { email, password, role } = req.body;
-
-  if (role === 'Cleaner' && !req.body.licenseNumber) {
-    return res.status(400).json({ message: "Cleaners must provide license" });
-  }
-
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: await bcrypt.hash(password, 10),
-      role: role || 'User',
-      ...(role === 'Cleaner' && {
-        cleanerProfile: {
-          create: { licenseNumber: req.body.licenseNumber }
-        }
-      })
-    }
-  });
-  res.status(201).json(user);
 };
 
 module.exports = {
   registerUser,
   loginUser,
 };
-

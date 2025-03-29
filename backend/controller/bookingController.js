@@ -1,12 +1,11 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-// Get all bookings for a user
 exports.getUserBookings = async (req, res) => {
   try {
     const bookings = await prisma.booking.findMany({
-      where: { userId: req.user.id }, // From JWT middleware
-      include: { service: true },    // Assuming a relation to "service"
+      where: { userId: req.user.id }, 
+      include: { service: true },   
     });
     res.json(bookings);
   } catch (error) {
@@ -14,7 +13,6 @@ exports.getUserBookings = async (req, res) => {
   }
 };
 
-// Create a new booking
 exports.createBooking = async (req, res) => {
   try {
     const { serviceId, date } = req.body;
@@ -23,7 +21,7 @@ exports.createBooking = async (req, res) => {
         userId: req.user.id,
         serviceId,
         date: new Date(date),
-        status: "PENDING", // Default status
+        status: "PENDING", 
       },
     });
     res.status(201).json(booking);
