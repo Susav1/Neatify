@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  ActivityIndicator 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import api from '@/services/api';
 
@@ -21,10 +21,7 @@ const BookingCard = ({ booking }: { booking: Booking }) => (
   <View style={styles.bookingCard}>
     <Text style={styles.bookingName}>{booking.serviceType}</Text>
     <Text style={styles.bookingDate}>Date: {booking.date}</Text>
-    <Text style={[
-      styles.bookingStatus, 
-      booking.status === 'CANCELLED' && styles.cancelledStatus
-    ]}>
+    <Text style={[styles.bookingStatus, booking.status === 'CANCELLED' && styles.cancelledStatus]}>
       Status: {booking.status}
     </Text>
   </View>
@@ -73,21 +70,22 @@ const Bookings = () => {
       <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'Past' && styles.activeTabButton]}
-          onPress={() => setActiveTab('Past')}
-        >
+          onPress={() => setActiveTab('Past')}>
           <Text style={[styles.tabText, activeTab === 'Past' && styles.activeTabText]}>Past</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'Active' && styles.activeTabButton]}
-          onPress={() => setActiveTab('Active')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Active' && styles.activeTabText]}>Active</Text>
+          onPress={() => setActiveTab('Active')}>
+          <Text style={[styles.tabText, activeTab === 'Active' && styles.activeTabText]}>
+            Active
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'Cancelled' && styles.activeTabButton]}
-          onPress={() => setActiveTab('Cancelled')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Cancelled' && styles.activeTabText]}>Cancelled</Text>
+          onPress={() => setActiveTab('Cancelled')}>
+          <Text style={[styles.tabText, activeTab === 'Cancelled' && styles.activeTabText]}>
+            Cancelled
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -103,10 +101,10 @@ const Bookings = () => {
 
 // Complete StyleSheet
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F7F7F7', 
-    padding: 16 
+  container: {
+    flex: 1,
+    backgroundColor: '#F7F7F7',
+    padding: 16,
   },
   loader: {
     flex: 1,

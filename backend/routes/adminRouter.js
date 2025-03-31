@@ -1,133 +1,60 @@
-// const express = require("express");
-// const router = express.Router();
-// const { PrismaClient } = require("@prisma/client");
-// const prisma = new PrismaClient();
-
-// router.get("/users", async (req, res) => {
-//   const users = await prisma.user.findMany();
-//   res.json(users);
-// });
-
-// router.get("/providers", async (req, res) => {
-//   const providers = await prisma.user.findMany({ where: { role: "provider" } });
-//   res.json(providers);
-// });
-
-// router.get("/bookings", async (req, res) => {
-//   const bookings = await prisma.booking.findMany();
-//   res.json(bookings);
-// });
-
-// router.delete("/users/:id", async (req, res) => {
-//   const { id } = req.params;
-//   await prisma.user.delete({ where: { id: parseInt(id) } });
-//   res.json({ message: "User deleted" });
-// });
-
-// module.exports = router;
-
-// adminRouter.js
-const express = require('express');
-const prisma = require('../prisma/prisma'); // Import the initialized Prisma client
+const express = require("express");
 const router = express.Router();
+const prisma = require("../prisma/prisma"); // Make sure this path is correct
+const bcrypt = require("bcryptjs"); // For password hashing and comparison
 
-// Endpoint to create a new admin
-router.post('/admin', async (req, res) => {
-  const { email, password, name } = req.body;
-  
+// Admin Login
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
   try {
-    const newAdmin = await prisma.admin.create({
-      data: {
-        email,
-        password,
-        name,
-      },
+    const admin = await prisma.admin.findUnique({
+      where: { email },
     });
-    res.status(201).json(newAdmin);
+
+    if (!admin) {
+      return res.status(404).json({ error: "Admin not found" });
+    }
+
+    // Use bcrypt to compare hashed passwords
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    res.json({ message: "Login successful", admin });
   } catch (error) {
-    res.status(500).json({ error: 'Error creating admin' });
+    console.error(error);
+    res.status(500).json({ error: "Error logging in" });
   }
 });
 
-// Endpoint to fetch all admins
-router.get('/admins', async (req, res) => {
+// Service Approval & Rejection
+router.put("/services/approve/:serviceId", async (req, res) => {
+  // Implement your approval logic here
+  res.send("Service approved");
+});
+
+router.put("/services/reject/:serviceId", async (req, res) => {
+  // Implement your rejection logic here
+  res.send("Service rejected");
+});
+
+// Get All Users
+router.get("/users", async (req, res) => {
   try {
-    const admins = await prisma.admin.findMany();
-    res.json(admins);
+    const users = await prisma.user.findMany();
+    res.json(users);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching admins' });
+    res.status(500).json({ error: "Error fetching users" });
   }
 });
 
-// Endpoint to create or update a service (Admin can manage services)
-router.post('/services', async (req, res) => {
-  const { name, description, price, duration, adminId } = req.body;
-  
-  try {
-    const newService = await prisma.service.create({
-      data: {
-        name,
-        description,
-        price,
-        duration,
-        adminId, // Link to the admin managing the service
-      },
-    });
-    res.status(201).json(newService);
-  } catch (error) {
-    res.status(500).json({ error: 'Error creating service' });
-  }
-});
-
-// Endpoint to get all services managed by a specific admin
-router.get('/services/:adminId', async (req, res) => {
-  const { adminId } = req.params;
-
-  try {
-    const services = await prisma.service.findMany({
-      where: {
-        adminId,
-      },
-    });
-    res.json(services);
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching services for admin' });
-  }
-});
-
-// Endpoint to update a service
-router.put('/services/:id', async (req, res) => {
-  const { id } = req.params;
-  const { name, description, price, duration } = req.body;
-
-  try {
-    const updatedService = await prisma.service.update({
-      where: { id },
-      data: {
-        name,
-        description,
-        price,
-        duration,
-      },
-    });
-    res.json(updatedService);
-  } catch (error) {
-    res.status(500).json({ error: 'Error updating service' });
-  }
-});
-
-// Endpoint to delete a service
-router.delete('/services/:id', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const deletedService = await prisma.service.delete({
-      where: { id },
-    });
-    res.json(deletedService);
-  } catch (error) {
-    res.status(500).json({ error: 'Error deleting service' });
-  }
+// Block Provider
+router.put("/providers/block/:providerId", async (req, res) => {
+  // Implement your block provider logic here
+  res.send("Provider blocked");
 });
 
 module.exports = router;

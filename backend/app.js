@@ -8,20 +8,19 @@ const bookingRouter = require("./routes/bookingRouter");
 const { config } = require("./config");
 const prisma = require("./prisma/prisma");
 
-
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: "http://localhost:8081", 
+    origin: "http://localhost:8081",
     credentials: true,
   })
 );
 
-app.use("/", userRouter);    
-app.use("/admin", adminRouter);  
+app.use("/", userRouter);
+app.use("/admin", adminRouter);
 app.use("/bookings", bookingRouter);
 
 const port = config.port || 5000;

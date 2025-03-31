@@ -1,7 +1,6 @@
 const User = require("../models/userModel");
 const Service = require("../models/serviceModel");
 
-// ✅ Approve a Service
 const approveService = async (req, res) => {
   try {
     const { serviceId } = req.params;
@@ -15,7 +14,6 @@ const approveService = async (req, res) => {
   }
 };
 
-// ✅ Reject a Service
 const rejectService = async (req, res) => {
   try {
     const { serviceId } = req.params;
@@ -29,7 +27,6 @@ const rejectService = async (req, res) => {
   }
 };
 
-// ✅ View All Users & Providers
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
@@ -39,7 +36,6 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// ✅ Block a Service Provider
 const blockProvider = async (req, res) => {
   try {
     const { providerId } = req.params;
