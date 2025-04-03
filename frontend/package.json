@@ -54,7 +54,8 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^7.4.1",
     "tailwind-rn": "^4.2.0",
-    "tailwindcss-react-native": "^1.7.10"
+    "tailwindcss-react-native": "^1.7.10",
+    "twrnc": "^4.6.1"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",
