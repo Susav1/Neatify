@@ -1,32 +1,27 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-const baseURL =
-  Platform.OS === 'android' ? 'http://10.0.2.2:5000/admin' : 'http://localhost:5000/admin';
+const baseURL = Platform.OS === 'android' ? 'http://10.0.2.2:5000' : 'http://localhost:5000';
 
-const adminApi = axios.create({ baseURL });
+const api = axios.create({ baseURL });
 
-// Add auth token to requests
-adminApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('adminToken');
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('userToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-export interface DashboardStats {
-  totalUsers: number;
-  totalBookings: number;
-  totalServices: number;
-  revenue: number;
-}
+// Create a booking
+export const createBooking = async (serviceId: number, date: string) => {
+  try {
+    const response = await api.post('/bookings', { serviceId, date });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    throw error;
+  }
+};
 
-export interface Booking {
-  id: string;
-  status: string;
-  user: { name: string };
-  service: { name: string };
-}
-
-export default adminApi;
+export default api;

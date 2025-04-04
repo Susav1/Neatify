@@ -1,33 +1,80 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  Image,
+  Alert,
+  ScrollView,
+} from 'react-native';
 
-const CleaningServiceView = ({ setCurrentPage }: { setCurrentPage: (page: string) => void }) => {
-  const [userName, setUserName] = useState('');
-  const [userPhone, setUserPhone] = useState('');
-  const [userNotes, setUserNotes] = useState('');
-  const [userLocation, setUserLocation] = useState('');
+interface CleaningServiceViewProps {
+  setCurrentPage: (page: string) => void;
+}
 
+const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPage }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    notes: '',
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Validate phone number
+  const isValidPhone = (phone: string) => {
+    return /^\d{10}$/.test(phone);
+  };
+
+  // Handle booking submission
   const handleBooking = () => {
-    if (!userName || !userPhone || !userLocation) {
-      Alert.alert('Please fill all required fields.');
-    } else {
-      // Placeholder for booking logic
-      Alert.alert('Booking confirmed!', `Thank you, ${userName}.`);
+    // Validate required fields
+    if (!formData.name || !formData.phone || !formData.address) {
+      Alert.alert('Error', 'Please fill all required fields');
+      return;
     }
+
+    // Validate phone format
+    if (!isValidPhone(formData.phone)) {
+      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    // Here you would normally call your booking API
+    // For now, we'll just show a success message
+    Alert.alert(
+      'Booking Confirmed',
+      `Thank you, ${formData.name}. Your cleaning service is booked.`,
+      [
+        {
+          text: 'OK',
+          onPress: () => setCurrentPage('Home'),
+        },
+      ]
+    );
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Home Cleaning Service</Text>
+
       <Image
         source={{
           uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
-        }} // Replace with actual image URL
+        }}
         style={styles.serviceImage}
       />
+
       <Text style={styles.description}>
-        We offer professional home cleaning services using eco-friendly products to ensure your home
-        is spotless and safe.
+        We offer professional home cleaning services using eco-friendly products.
       </Text>
 
       <Text style={styles.sectionTitle}>Service Details</Text>
@@ -35,34 +82,66 @@ const CleaningServiceView = ({ setCurrentPage }: { setCurrentPage: (page: string
         <Text style={styles.detailText}>Price: NPR 2000</Text>
         <Text style={styles.detailText}>Duration: 2-3 hours</Text>
         <Text style={styles.detailText}>Cleaning Areas: Kitchen, Living Room, Bathroom</Text>
-        <Text style={styles.detailText}>Features: Eco-friendly, Pet-friendly</Text>
       </View>
 
-      {/* Moved buttons down further by increasing marginTop */}
-      <TouchableOpacity style={[styles.bookButton, { marginTop: 50 }]} onPress={handleBooking}>
+      {/* Booking Form */}
+      <Text style={styles.formTitle}>Your Information</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Full Name*"
+        value={formData.name}
+        onChangeText={(text) => handleInputChange('name', text)}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Phone Number*"
+        keyboardType="phone-pad"
+        value={formData.phone}
+        onChangeText={(text) => handleInputChange('phone', text)}
+        maxLength={10}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Address*"
+        value={formData.address}
+        onChangeText={(text) => handleInputChange('address', text)}
+      />
+
+      <TextInput
+        style={[styles.input, styles.notesInput]}
+        // placeholder="Instructions (optional)"
+        multiline
+        value={formData.notes}
+        onChangeText={(text) => handleInputChange('notes', text)}
+      />
+
+      <TouchableOpacity style={styles.bookButton} onPress={handleBooking}>
         <Text style={styles.bookButtonText}>Book Now</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.backButton, { marginTop: 20 }]}
-        onPress={() => setCurrentPage('Home')}>
+      <TouchableOpacity style={styles.backButton} onPress={() => setCurrentPage('Home')}>
         <Text style={styles.backButtonText}>Back to Home</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     padding: 20,
     backgroundColor: '#fff',
+    paddingBottom: 40,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'center',
+    color: '#333',
   },
   serviceImage: {
     width: '100%',
@@ -72,30 +151,40 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    textAlign: 'center',
+    lineHeight: 24,
     marginBottom: 20,
+    color: '#555',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#333',
+  },
+  formTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     marginTop: 20,
+    marginBottom: 15,
+    color: '#333',
   },
   serviceDetails: {
     marginBottom: 20,
+    paddingHorizontal: 10,
   },
   detailText: {
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 8,
     color: '#555',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    padding: 10,
-    borderRadius: 5,
+    padding: 15,
+    borderRadius: 8,
     marginBottom: 15,
     fontSize: 16,
+    backgroundColor: '#fff',
   },
   notesInput: {
     height: 100,
@@ -103,24 +192,26 @@ const styles = StyleSheet.create({
   },
   bookButton: {
     backgroundColor: '#27AE60',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 20,
+    marginBottom: 15,
+    alignItems: 'center',
   },
   bookButtonText: {
     color: '#fff',
-    fontSize: 16,
-    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   backButton: {
     backgroundColor: '#DB2955',
-    padding: 10,
-    borderRadius: 10,
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   backButtonText: {
     color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
+    fontSize: 16,
   },
 });
 

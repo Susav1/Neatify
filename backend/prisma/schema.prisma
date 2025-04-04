@@ -35,7 +35,7 @@ model Service {
   name        String
   description String?
   price       Float
-  duration    DateTime
+  duration    Int
   userId      String?   @db.ObjectId
   user        User?     @relation(fields: [userId], references: [id])
   bookings    Booking[]
@@ -55,6 +55,9 @@ model Booking {
   notes     String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([serviceId])
 }
 
 model Review {
@@ -66,6 +69,9 @@ model Review {
   serviceId String?  @db.ObjectId
   service   Service? @relation(fields: [serviceId], references: [id])
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([serviceId])
 }
 
 enum Role {
