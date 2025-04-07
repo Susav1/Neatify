@@ -1,34 +1,33 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
+import StatsCard from '@/components/admin/StatsCard';
 
-const Dashboard = () => {
+// Define mock data for StatsCard
+const statsData = [
+  { title: 'Total Users', value: 200 },
+  { title: 'Active Users', value: 150 },
+];
+
+const AdminDashboard = () => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
-      <View style={styles.content}>
-        <Text style={styles.text}>Overview of your application</Text>
+    <ScrollView style={{ padding: 16 }}>
+      <View style={{ marginBottom: 16 }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Admin Dashboard</Text>
       </View>
-    </View>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        {/* Pass title and value as props to StatsCard */}
+        {statsData.map((data, index) => (
+          <StatsCard key={index} title={data.title} value={data.value} />
+        ))}
+      </View>
+
+      <View style={{ marginTop: 20 }}>
+        <Text style={{ fontSize: 18 }}>More Stats</Text>
+        <Text style={{ color: 'gray' }}>I am </Text>
+      </View>
+    </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  content: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    borderRadius: 5,
-  },
-  text: {
-    fontSize: 16,
-  },
-});
-
-export default Dashboard;
+export default AdminDashboard;

@@ -29,7 +29,6 @@ const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
     }));
   };
 
-  // Validate phone number
   const isValidPhone = (phone: string) => {
     return /^\d{10}$/.test(phone);
   };
@@ -48,8 +47,6 @@ const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
       return;
     }
 
-    // Here you would normally call your booking API
-    // For now, we'll just show a success message
     Alert.alert(
       'Booking Confirmed',
       `Thank you, ${formData.name}. Your cleaning service is booked.`,
@@ -112,7 +109,6 @@ const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
 
       <TextInput
         style={[styles.input, styles.notesInput]}
-        // placeholder="Instructions (optional)"
         multiline
         value={formData.notes}
         onChangeText={(text) => handleInputChange('notes', text)}
