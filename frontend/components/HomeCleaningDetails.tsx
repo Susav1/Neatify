@@ -9,6 +9,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
+import Khalti from './Khalti';
 
 interface CleaningServiceViewProps {
   setCurrentPage: (page: string) => void;
@@ -22,6 +23,8 @@ const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
     notes: '',
   });
 
+  const servicePrice = 2000;
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -33,20 +36,21 @@ const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
     return /^\d{10}$/.test(phone);
   };
 
-  // Handle booking submission
-  const handleBooking = () => {
-    // Validate required fields
+  const validateForm = () => {
     if (!formData.name || !formData.phone || !formData.address) {
       Alert.alert('Error', 'Please fill all required fields');
-      return;
+      return false;
     }
 
-    // Validate phone format
     if (!isValidPhone(formData.phone)) {
       Alert.alert('Error', 'Please enter a valid 10-digit phone number');
-      return;
+      return false;
     }
 
+    return true;
+  };
+
+  const handlePaymentSuccess = () => {
     Alert.alert(
       'Booking Confirmed',
       `Thank you, ${formData.name}. Your cleaning service is booked.`,
@@ -57,6 +61,10 @@ const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
         },
       ]
     );
+  };
+
+  const handlePaymentError = (error: string) => {
+    Alert.alert('Payment Error', error);
   };
 
   return (
@@ -76,12 +84,11 @@ const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
 
       <Text style={styles.sectionTitle}>Service Details</Text>
       <View style={styles.serviceDetails}>
-        <Text style={styles.detailText}>Price: NPR 2000</Text>
-        <Text style={styles.detailText}>Duration: 2-3 hours</Text>
+        <Text style={styles.detailText}>Price: NPR {servicePrice}</Text>
+        <Text style={styles.detailText}>Duration: 2–3 hours</Text>
         <Text style={styles.detailText}>Cleaning Areas: Kitchen, Living Room, Bathroom</Text>
       </View>
 
-      {/* Booking Form */}
       <Text style={styles.formTitle}>Your Information</Text>
 
       <TextInput
@@ -110,13 +117,17 @@ const CleaningServiceView: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
       <TextInput
         style={[styles.input, styles.notesInput]}
         multiline
+        placeholder="Additional Notes"
         value={formData.notes}
         onChangeText={(text) => handleInputChange('notes', text)}
       />
 
-      <TouchableOpacity style={styles.bookButton} onPress={handleBooking}>
-        <Text style={styles.bookButtonText}>Book Now</Text>
-      </TouchableOpacity>
+      <Khalti
+        payment={servicePrice}
+        onSuccess={handlePaymentSuccess}
+        onError={handlePaymentError}
+        beforePaymentValidation={validateForm}
+      />
 
       <TouchableOpacity style={styles.backButton} onPress={() => setCurrentPage('Home')}>
         <Text style={styles.backButtonText}>Back to Home</Text>
@@ -186,24 +197,12 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-  bookButton: {
-    backgroundColor: '#27AE60',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 20,
-    marginBottom: 15,
-    alignItems: 'center',
-  },
-  bookButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   backButton: {
     backgroundColor: '#DB2955',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 20,
   },
   backButtonText: {
     color: '#fff',
