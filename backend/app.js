@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const userRouter = require("./routes/userRouter");
 const adminRouter = require("./routes/adminRouter");
 const bookingRouter = require("./routes/bookingRouter");
+const paymentRoutes = require("./routes/paymentRouter");
 const { config } = require("./config");
 
 app.use(cookieParser());
@@ -22,6 +23,7 @@ app.use(
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 app.use("/bookings", bookingRouter);
+app.use("/payment", paymentRoutes);
 
 const port = config.port || 5000;
 app.listen(port, () => {
