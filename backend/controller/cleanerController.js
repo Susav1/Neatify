@@ -1,16 +1,100 @@
-const Cleaner = require("../models/cleanerModel");
-const Booking = require("../models/bookingModel");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { loginSchema, registerSchema } = require("../utils/cleanerSchema");
+const { PrismaClient } = require("@prisma/client");
 
-exports.getCleanerDashboard = async (req, res) => {
+const prisma = new PrismaClient();
+
+const registerCleaner = async (req, res) => {
   try {
-    const cleanerId = req.user.id;
-    const earnings = await Booking.aggregate([
-      { $match: { cleanerId, status: "Completed" } },
-      { $group: { _id: null, total: { $sum: "$price" } } },
-    ]);
-    const bookings = await Booking.find({ cleanerId });
-    res.status(200).json({ earnings: earnings[0]?.total || 0, bookings });
+    const validationResult = registerSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({ errors: validationResult.error.errors });
+    }
+
+    const existingCleaner = await prisma.cleaner.findUnique({
+      where: { email: req.body.email },
+    });
+
+    if (existingCleaner) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+    const cleaner = await prisma.cleaner.create({
+      data: {
+        email: req.body.email,
+        password: hashedPassword,
+        role: "Cleaner",
+        name: req.body.name,
+        licenseNumber: req.body.licenseNumber,
+        phone: req.body.phone,
+      },
+    });
+
+    res.status(201).json({ cleaner });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Cleaner registration error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
   }
+};
+
+const loginCleaner = async (req, res) => {
+  try {
+    const validationResult = loginSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({ errors: validationResult.error.errors });
+    }
+
+    const { email, password } = req.body;
+
+    const cleaner = await prisma.cleaner.findUnique({
+      where: { email },
+    });
+
+    if (!cleaner) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, cleaner.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const token = jwt.sign(
+      { id: cleaner.id, email: cleaner.email, role: cleaner.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({ message: "Login successful", token });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+};
+
+const logoutCleaner = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+    res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+};
+
+module.exports = {
+  registerCleaner,
+  loginCleaner,
+  logoutCleaner,
 };
