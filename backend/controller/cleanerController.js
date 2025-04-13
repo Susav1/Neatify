@@ -93,8 +93,49 @@ const logoutCleaner = async (req, res) => {
   }
 };
 
+const getAllCleaners = async (req, res) => {
+  try {
+    const cleaners = await prisma.cleaner.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    res.status(200).json(cleaners);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching cleaners", error: error.message });
+  }
+};
+
+const deleteCleaner = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const cleaner = await prisma.cleaner.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!cleaner) {
+      return res.status(404).json({ message: "Cleaner not found" });
+    }
+
+    await prisma.cleaner.delete({
+      where: { id: parseInt(id) },
+    });
+
+    res.status(200).json({ message: "Cleaner deleted successfully" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error deleting cleaner", error: error.message });
+  }
+};
+
 module.exports = {
   registerCleaner,
   loginCleaner,
   logoutCleaner,
+  getAllCleaners,
+  deleteCleaner,
 };

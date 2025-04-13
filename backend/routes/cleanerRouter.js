@@ -1,8 +1,13 @@
 const express = require("express");
-const { getCleanerDashboard } = require("../controllers/cleanerController");
-const authMiddleware = require("../middleware/authMiddleware");
+const {
+  registerCleaner,
+  loginCleaner,
+  logoutCleaner,
+} = require("../controller/cleanerController");
 const router = express.Router();
 
-router.get("/dashboard", authMiddleware, getCleanerDashboard);
+router.post("/register", registerCleaner);
+router.post("/login", loginCleaner);
+router.get("/logout", logoutCleaner);
 
 module.exports = router;

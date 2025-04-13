@@ -1,34 +1,28 @@
 const axios = require("axios");
-require("dotenv").config(); // Load environment variables from .env
+require("dotenv").config();
 
-// Initiate Khalti Payment
 const initiatePayment = async (req, res) => {
-  const {
-    amount,
-    mobile,
-    purchase_order_id,
-    purchase_order_name,
-    passengerNames,
-  } = req.body;
+  const { amount, mobile, purchase_order_id, purchase_order_name, userName } =
+    req.body;
 
   try {
     const response = await axios.post(
       "https://khalti.com/api/v2/epayment/initiate/",
       {
-        return_url: "http://localhost:8081/lists", // Frontend success URL
-        website_url: "http://localhost:8081/lists", // Frontend URL
-        amount: amount * 100, // Amount in paisa
+        return_url: "http://localhost:8081/lists",
+        website_url: "http://localhost:8081/lists",
+        amount: amount * 100,
         purchase_order_id,
         purchase_order_name,
         customer_info: {
-          name: passengerNames[0], // Use the first passenger's name
-          email: "susav100@gmail.cpm", // Replace with actual email if available
+          name: userName[0],
+          email: "susav100@gmail.com",
           phone: "9767569334",
         },
       },
       {
         headers: {
-          Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`, // Use environment variable
+          Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`,
         },
       }
     );
@@ -46,7 +40,6 @@ const initiatePayment = async (req, res) => {
   }
 };
 
-// Verify Khalti Payment
 const verifyPayment = async (req, res) => {
   const { pidx } = req.body;
 
@@ -58,13 +51,12 @@ const verifyPayment = async (req, res) => {
       },
       {
         headers: {
-          Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`, // Use environment variable
+          Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`,
         },
       }
     );
 
     if (response.data.status === "Completed") {
-      // Payment is successful, update your database here
       res.status(200).json({
         success: true,
         message: "Payment verified successfully",

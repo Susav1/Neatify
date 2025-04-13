@@ -16,6 +16,7 @@ import BookingManagement from "./components/BookingManagement";
 import DocumentManagement from "./components/DocumentManagement";
 import Login from "./components/Login";
 import CreateService from "./components/CreateService";
+import CleanerManagement from "./components/CleanerManagement";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(true);
@@ -51,6 +52,10 @@ const App = () => {
                   <Route
                     path="/document-management"
                     element={<DocumentManagement />}
+                  />
+                  <Route
+                    path="/cleaner-management"
+                    element={<CleanerManagement />}
                   />
                   <Route path="/" element={<Navigate to="/dashboard" />} />
                 </Routes>

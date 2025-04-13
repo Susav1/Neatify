@@ -1,6 +1,9 @@
+import { logout } from '@/services/auth.service';
+import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Install this package for icons
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const SettingsScreen: React.FC = () => {
   const handleMyBookings = () => {
@@ -15,10 +18,32 @@ const SettingsScreen: React.FC = () => {
     Alert.alert('Language', 'Open Language selection modal');
   };
 
+  const router = useRouter();
+  const { mutateAsync } = useMutation({
+    mutationKey: ['logout'],
+    mutationFn: logout,
+  });
+
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', onPress: () => console.log('User logged out') },
+      {
+        text: 'Logout',
+        onPress: async () => {
+          try {
+            // Call the logout mutation
+            await mutateAsync();
+
+            // After successful logout, navigate to login screen
+            router.replace('/(auth)/sign-in');
+
+            console.log('User logged out successfully');
+          } catch (error) {
+            console.error('Logout error:', error);
+            Alert.alert('Logout Failed', 'There was a problem logging out. Please try again.');
+          }
+        },
+      },
     ]);
   };
 
@@ -77,8 +102,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', // Changed background color to white
   },
   header: {
-    paddingVertical: 40, 
-    paddingHorizontal: 150, 
+    paddingVertical: 40,
+    paddingHorizontal: 150,
     backgroundColor: '#fff',
     borderBottomColor: '#ddd',
     justifyContent: 'center', // Center text vertically
@@ -101,7 +126,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     marginHorizontal: 16,
     borderRadius: 12,
-    elevation: 2, 
+    elevation: 2,
     shadowColor: '#000', // Shadow for iOS
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

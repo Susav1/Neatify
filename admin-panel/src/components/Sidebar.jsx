@@ -69,6 +69,7 @@ const Sidebar = ({ isOpen, toggle }) => {
     { path: "/booking-management", label: "Booking Management", icon: "📅" },
     { path: "/payment-management", label: "Payment Management", icon: "💳" },
     { path: "/create-service", label: "Create Services", icon: "" },
+    { path: "/cleaner-management", label: "Cleaner Management", icon: "" },
   ];
 
   return (

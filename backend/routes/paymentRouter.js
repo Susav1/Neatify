@@ -1,4 +1,3 @@
-// routes/paymentRouter.js
 const express = require("express");
 const axios = require("axios");
 const router = express.Router();
@@ -10,7 +9,7 @@ router.post("/initiate", async (req, res) => {
     const data = {
       return_url: return_url || "http://localhost:8081/lists",
       website_url: "http://localhost:8081/",
-      amount: amount * 100, // Convert to paisa
+      amount: amount * 100,
       purchase_order_id: `order_${Date.now()}`,
       purchase_order_name: "Cleaning Service",
       customer_info: {

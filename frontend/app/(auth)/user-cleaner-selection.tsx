@@ -27,7 +27,7 @@ const UserCleanerSelection = () => {
 
       <Button
         mode="contained"
-        onPress={() => router.push('/admin/index')}
+        onPress={() => router.push('/(auth)/cleaner-sign-in')}
         style={styles.button}
         labelStyle={styles.buttonText}>
         As a Cleaner

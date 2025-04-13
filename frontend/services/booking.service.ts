@@ -1,27 +1,16 @@
-import { useMutation, useQuery } from 'react-query';
-import api from '@/services/api';
+import api from './api';
+import { API_URL } from '../constants';
 
-export const useGetCleanerBookings = () => {
-  return useQuery('cleanerBookings', async () => {
-    const { data } = await api.get('/bookings/cleaner');
-    return data;
-  });
+export const createBooking = async (data: {
+  serviceId: string;
+  name: string;
+  phone: string;
+  address: string;
+  notes?: string;
+}) => {
+  return api.post(`${API_URL}/bookings`, data);
 };
 
-export const useUpdateBookingStatus = () => {
-  return useMutation(
-    ({ bookingId, status }: { bookingId: string; status: 'CONFIRMED' | 'REJECTED' }) =>
-      api.put(`/bookings/${bookingId}/status`, { status })
-  );
-};
-
-export const useCreateBooking = () => {
-  return useMutation((bookingData: any) => api.post('/bookings', bookingData));
-};
-
-export const useGetUserBookings = () => {
-  return useQuery('userBookings', async () => {
-    const { data } = await api.get('/bookings/user');
-    return data;
-  });
+export const getUserBookings = async () => {
+  return api.get(`${API_URL}/bookings/user`);
 };
