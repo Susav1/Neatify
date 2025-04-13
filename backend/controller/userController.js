@@ -5,6 +5,8 @@ const { config } = require("../config");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
+
+// Register a new user
 const registerUser = async (req, res) => {
   try {
     const validationResult = registerSchema.safeParse(req.body);
@@ -41,6 +43,7 @@ const registerUser = async (req, res) => {
   }
 };
 
+// Login an existing user
 const loginUser = async (req, res) => {
   try {
     const validationResult = loginSchema.safeParse(req.body);
@@ -57,9 +60,9 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const isPasswordValid = await bcrypt.compare(hashedPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -78,9 +81,10 @@ const loginUser = async (req, res) => {
   }
 };
 
+// Logout (placeholder - token invalidation can be handled via client or token blacklist)
 const logout = async (req, res) => {
   try {
-    const token = req.headers.authorization.split(" ")[1];
+    const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
@@ -92,13 +96,10 @@ const logout = async (req, res) => {
   }
 };
 
+// Get all users
 const getAllUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany();
-    // include: {
-    //   document: true,
-    // },
-    // });
     res.status(200).json(users);
   } catch (error) {
     res

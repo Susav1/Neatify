@@ -15,9 +15,10 @@ export type LoginFormData = {
 };
 
 export type RegisterFormData = {
+  name: string; // Added this required field
   email: string;
-  password?: string;
-  confirmPassword?: string;
+  password: string;
+  confirmPassword: string;
   role: 'User';
 };
 
@@ -30,7 +31,6 @@ export interface ErrorResponse {
   error: true;
   msg: string;
 }
-
 
 export type ForgotPasswordFormData = {
   email: string;

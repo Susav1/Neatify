@@ -15,6 +15,7 @@ import Profile from './Profile';
 import SettingsScreen from './settings';
 import { useGetProfile } from '@/services/profile.service';
 import HomeCleaningDetails from './HomeCleaningDetails';
+import CarpetCleaningDetails from './CarpetCleaningDetails';
 
 const ListHamburger = () => {
   const [currentPage, setCurrentPage] = useState('Home');
@@ -59,7 +60,11 @@ const ListHamburger = () => {
                 <TouchableOpacity
                   key={index}
                   style={styles.taskCard}
-                  onPress={() => setCurrentPage('HomeCleaningDetails')}>
+                  onPress={() => {
+                    if (task === 'Home Cleaning') setCurrentPage('HomeCleaningDetails');
+                    else if (task === 'Office Cleaning') setCurrentPage('OfficeCleaningDetails');
+                    else if (task === 'Carpet Cleaning') setCurrentPage('CarpetCleaningDetails');
+                  }}>
                   <Image
                     source={{ uri: taskImages[index] }}
                     style={styles.taskImage}
@@ -97,6 +102,10 @@ const ListHamburger = () => {
         return <SettingsScreen />;
       case 'HomeCleaningDetails':
         return <HomeCleaningDetails setCurrentPage={setCurrentPage} />;
+      case 'OfficeCleaningDetails':
+        return <OfficeCleaningDetails setCurrentPage={setCurrentPage} />;
+      case 'CarpetCleaningDetails':
+        return <CarpetCleaningDetails setCurrentPage={setCurrentPage} />;
       default:
         return null;
     }

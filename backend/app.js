@@ -22,10 +22,10 @@ app.use(
 
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
-app.use("/bookings", bookingRouter);
 app.use("/payment", paymentRoutes);
 app.use("/services", serviceRouter);
 app.use("/cleaners", cleanerRouter);
+app.use("/api/bookings", bookingRouter);
 
 const port = 5000;
 app.listen(port, () => {
