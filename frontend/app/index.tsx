@@ -18,7 +18,7 @@ const Home = () => {
     if (!authState.authenticated) {
       router.push('/(auth)/welcome');
     } else {
-      router.push('/(tabs)/lists');
+      router.push('/(home)/service');
     }
   }, [authState.authenticated, isMounted, router]);
 

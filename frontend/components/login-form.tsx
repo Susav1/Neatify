@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { TextInput, Button, Text, IconButton } from 'react-native-paper';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 
 import type { LoginFormData } from '../types/form';
 import { useAuth } from '@/context/auth-context';
@@ -34,10 +34,22 @@ const LoginForm = () => {
 
   return (
     <View style={styles.container}>
-      <Text variant="headlineMedium" style={styles.title}>Neatify</Text>
+      {/* Back Button */}
+      <IconButton
+        icon="arrow-left"
+        size={24}
+        onPress={() => router.back()}
+        style={styles.backButton}
+      />
+
+      <Text variant="headlineMedium" style={styles.title}>
+        Neatify
+      </Text>
       <Text style={styles.tagline}>Book a Clean, Live Serene!</Text>
 
-      <Text variant="titleMedium" style={styles.loginTitle}>Login</Text>
+      <Text variant="titleMedium" style={styles.loginTitle}>
+        Login
+      </Text>
 
       <Controller
         control={control}
@@ -76,13 +88,13 @@ const LoginForm = () => {
               onChangeText={onChange}
               placeholder="Password"
               value={value}
-              secureTextEntry={!showPassword}  
+              secureTextEntry={!showPassword}
               mode="outlined"
               style={styles.input}
             />
             <IconButton
-              icon={showPassword ? 'eye-off' : 'eye'} 
-              onPress={() => setShowPassword(!showPassword)}  
+              icon={showPassword ? 'eye-off' : 'eye'}
+              onPress={() => setShowPassword(!showPassword)}
               size={24}
               style={styles.eyeIcon}
             />
@@ -100,8 +112,7 @@ const LoginForm = () => {
         mode="contained"
         onPress={handleSubmit(onSubmit)}
         style={styles.loginButton}
-        labelStyle={styles.loginButtonText}
-      >
+        labelStyle={styles.loginButtonText}>
         Login
       </Button>
 
@@ -121,7 +132,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#F4F8F7',
   },
-
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 10,
+    zIndex: 1,
+  },
   title: {
     fontSize: 42,
     fontWeight: 'bold',
@@ -129,21 +145,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 5,
   },
-
   tagline: {
     fontSize: 18,
     color: '#666',
     textAlign: 'center',
     marginBottom: 20,
   },
-
   loginTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
   },
-
   input: {
     width: '100%',
     height: 50,
@@ -152,25 +165,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff',
   },
-
   passwordContainer: {
     position: 'relative',
   },
-
   eyeIcon: {
     position: 'absolute',
     top: '32%',
     right: 15,
     transform: [{ translateY: -12 }],
-   
   },
-
   errorText: {
     color: 'red',
     fontSize: 12,
     marginBottom: 8,
   },
-
   forgotPassword: {
     alignSelf: 'flex-end',
     color: '#27AE60',
@@ -178,23 +186,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textDecorationLine: 'underline',
   },
-
   loginButton: {
     backgroundColor: '#27AE60',
     height: 45,
     borderRadius: 8,
     justifyContent: 'center',
     alignSelf: 'center',
-    width: '70%', 
+    width: '70%',
     marginTop: 10,
   },
-
   loginButtonText: {
     fontSize: 16,
-    fontWeight: 'bold', 
-    color: '#fff', 
+    fontWeight: 'bold',
+    color: '#fff',
   },
-
   orText: {
     fontSize: 18,
     textAlign: 'center',
@@ -202,7 +207,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     color: '#808080',
   },
-
   registerLink: {
     backgroundColor: '#2ECC71',
     height: 45,
@@ -211,7 +215,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '70%',
     textAlign: 'center',
-    color: '#fff', 
+    color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
     paddingVertical: 12,

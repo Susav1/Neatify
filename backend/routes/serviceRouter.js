@@ -6,7 +6,7 @@ const {
   getServiceById,
 } = require("../controller/serviceController");
 
-router.get("/get", getAllServices);
+router.get("/", getAllServices);
 router.get("/:id", getServiceById);
 router.post("/create", createService);
 
