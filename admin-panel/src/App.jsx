@@ -10,16 +10,17 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
 import UserManagement from "./components/UserManagement";
-import BusManagement from "./components/BusManagement";
+import ServiceManagement from "./components/ServiceManagement";
 import PaymentManagement from "./components/PaymentManagement";
 import BookingManagement from "./components/BookingManagement";
 import DocumentManagement from "./components/DocumentManagement";
 import Login from "./components/Login";
 import CreateService from "./components/CreateService";
 import CleanerManagement from "./components/CleanerManagement";
+import CreateCategory from "./components/CreateCategory";
 
 const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -40,7 +41,10 @@ const App = () => {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/user-management" element={<UserManagement />} />
                   <Route path="/create-service" element={<CreateService />} />
-                  <Route path="/bus-management" element={<BusManagement />} />
+                  <Route
+                    path="/service-management"
+                    element={<ServiceManagement />}
+                  />
                   <Route
                     path="/payment-management"
                     element={<PaymentManagement />}
@@ -57,6 +61,7 @@ const App = () => {
                     path="/cleaner-management"
                     element={<CleanerManagement />}
                   />
+                  <Route path="/create-category" element={<CreateCategory />} />
                   <Route path="/" element={<Navigate to="/dashboard" />} />
                 </Routes>
               </div>

@@ -22,4 +22,9 @@ const authenticateAdmin = (req, res, next) => {
   }
 };
 
+const logout = (req, res) => {
+  res.cookie("jwt_cookie", "", { expires: new Date(0) });
+  res.status(200).json({ message: "Logout successful" });
+};
+
 module.exports = authenticateAdmin;

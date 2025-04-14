@@ -4,8 +4,7 @@ const prisma = new PrismaClient();
 
 const createService = async (req, res) => {
   try {
-    // const { name, description, price, duration, image, category } = req.body;
-    const { name, description, price, duration } = req.body;
+    const { name, description, price, duration, categoryId } = req.body;
 
     const newService = await prisma.service.create({
       data: {
@@ -13,6 +12,7 @@ const createService = async (req, res) => {
         description,
         price,
         duration,
+        categoryId,
       },
     });
 
@@ -25,8 +25,12 @@ const createService = async (req, res) => {
 
 const getAllServices = async (req, res) => {
   try {
-    const services = await Service.find();
-    res.status(200).json(services);
+    const categories = await prisma.category.findMany({
+      include: {
+        services: true,
+      },
+    });
+    res.json(categories);
   } catch (err) {
     res
       .status(500)

@@ -1,16 +1,71 @@
 import api from './api';
-import { API_URL } from '../constants';
 
-export const createBooking = async (data: {
+export const createBooking = async (bookingData: {
   serviceId: string;
-  name: string;
-  phone: string;
-  address: string;
+  date: Date;
+  time: string;
+  location: string;
+  paymentMethod: 'cash' | 'khalti';
   notes?: string;
+  areas?: any;
+  duration?: number;
 }) => {
-  return api.post(`${API_URL}/bookings`, data);
+  try {
+    const response = await api.post('/api/bookings', {
+      ...bookingData,
+      paymentMethod: bookingData.paymentMethod.toUpperCase(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    throw error;
+  }
 };
 
-export const getUserBookings = async () => {
-  return api.get(`${API_URL}/bookings/user`);
+export const getUserBookings = async (status?: string) => {
+  try {
+    const params = status ? { status } : {};
+    const response = await api.get('/api/bookings', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user bookings:', error);
+    throw error;
+  }
+};
+
+export const updateBookingStatus = async (
+  bookingId: string,
+  status: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
+) => {
+  try {
+    const response = await api.put(`/api/bookings/${bookingId}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    throw error;
+  }
+};
+
+export const getCleanerBookings = async (status?: string) => {
+  try {
+    const params = status ? { status } : {};
+    const response = await api.get('/api/bookings/cleaner', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching cleaner bookings:', error);
+    throw error;
+  }
+};
+
+export const updateCleanerBookingStatus = async (
+  bookingId: string,
+  status: 'CONFIRMED' | 'CANCELLED'
+) => {
+  try {
+    const response = await api.put(`/api/bookings/cleaner/${bookingId}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    throw error;
+  }
 };

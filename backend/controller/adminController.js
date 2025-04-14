@@ -18,7 +18,7 @@ const adminUserLogin = async (req, res) => {
     const user = await prisma.admin.findUnique({
       where: { email },
     });
-
+    console.log(user);
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -31,7 +31,7 @@ const adminUserLogin = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "7h" }
     );
 
     res.status(200).json({ message: "Admin Login successful", token });

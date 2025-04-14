@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 
 const CreateService = () => {
@@ -6,6 +6,25 @@ const CreateService = () => {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [duration, setDuration] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/category", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        setCategories(res.data || []);
+      } catch (error) {
+        console.error("Failed to fetch categories", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,6 +34,7 @@ const CreateService = () => {
         description,
         price: parseFloat(price),
         duration: parseInt(duration),
+        categoryId,
       };
 
       const token = localStorage.getItem("token");
@@ -35,8 +55,9 @@ const CreateService = () => {
 
       setName("");
       setDescription("");
-      setPrice(0);
-      setDuration(0);
+      setPrice("");
+      setDuration("");
+      setCategoryId("");
     } catch (error) {
       console.error(
         "Error creating service:",
@@ -81,6 +102,19 @@ const CreateService = () => {
           onChange={(e) => setDuration(e.target.value)}
           required
         />
+        <select
+          style={styles.input}
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          required
+        >
+          <option value="">Select Category</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
         <button type="submit" style={styles.button}>
           Create Service
         </button>

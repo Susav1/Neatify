@@ -65,11 +65,12 @@ const Sidebar = ({ isOpen, toggle }) => {
     { path: "/dashboard", label: "Dashboard", icon: "📊" },
     { path: "/user-management", label: "User Management", icon: "👥" },
     // { path: "/document-management", label: "Document Management", icon: "📄" },
-    { path: "/bus-management", label: "Bus Management", icon: "🚌" },
+    { path: "/service-management", label: "Service Management", icon: "💼" },
     { path: "/booking-management", label: "Booking Management", icon: "📅" },
     { path: "/payment-management", label: "Payment Management", icon: "💳" },
-    { path: "/create-service", label: "Create Services", icon: "" },
-    { path: "/cleaner-management", label: "Cleaner Management", icon: "" },
+    { path: "/create-service", label: "Create Services", icon: "➕" },
+    { path: "/create-category", label: "Create Category", icon: "" },
+    { path: "/cleaner-management", label: "Cleaner Management", icon: "🛠" },
   ];
 
   return (
