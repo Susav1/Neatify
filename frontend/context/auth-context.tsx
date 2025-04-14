@@ -51,11 +51,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
-    await secureStore.deleteItem(ACCESS_TOKEN_KEY);
-    await secureStore.deleteItem(REFRESH_TOKEN_KEY);
+    console.log('Auth context logout initiated'); // Debug log
+    try {
+      // Clear tokens first to ensure no requests can be made
+      await secureStore.deleteItem(ACCESS_TOKEN_KEY);
+      await secureStore.deleteItem(REFRESH_TOKEN_KEY);
+      axios.defaults.headers.common.Authorization = '';
 
-    axios.defaults.headers.common.Authorization = '';
-    setAuthState({ authenticated: false, token: null });
+      // Then attempt server logout
+      await api.post('/logout');
+
+      // Update state last
+      setAuthState({
+        authenticated: false,
+        token: null,
+      });
+      console.log('Auth context logout completed'); // Debug log
+    } catch (error) {
+      console.error('Auth context logout error:', error); // Debug log
+      // Even if server logout fails, ensure local state is cleared
+      setAuthState({
+        authenticated: false,
+        token: null,
+      });
+      throw error;
+    }
   };
 
   return (

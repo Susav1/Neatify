@@ -1,13 +1,13 @@
 const express = require("express");
 const {
   registerUser,
-  loginUser
-//   logout,
-//   msgUser, 
-//   getUserProfile,
-//   forgotPassword,
-//   resetPassword,
-//   updateUserProfile,
+  loginUser,
+  //   logout,
+  //   msgUser,
+  //   getUserProfile,
+  //   forgotPassword,
+  //   resetPassword,
+  //   updateUserProfile,
 } = require("../controller/userController");
 const router = express.Router();
 
@@ -20,6 +20,5 @@ router.post("/login", loginUser);
 // router.post("/forgot-pass",forgotPassword );
 // router.post("/reset-pass",resetPassword );
 // router.put("/profile",updateUserProfile)
-
 
 module.exports = router;

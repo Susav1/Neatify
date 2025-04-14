@@ -4,17 +4,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { TextInput, Button, Text, IconButton } from 'react-native-paper';
 import { Link, useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
-import { signUp } from '@/services/auth.service';
-
-type RegisterFormData = {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  role: string;
-  licenseNumber: string;
-  phone: string;
-};
+import { CleanerRegisterFormData } from '../../types/form';
+import { cleanerSignUp } from '@/services/auth.service';
 
 const RegisterForm = () => {
   const {
@@ -23,14 +14,13 @@ const RegisterForm = () => {
     formState: { errors },
     watch,
     reset,
-  } = useForm<RegisterFormData>({
+  } = useForm<CleanerRegisterFormData>({
     defaultValues: {
       name: '',
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'cleaner',
-      licenseNumber: '',
+      role: 'Cleaner',
       phone: '',
     },
   });
@@ -38,20 +28,19 @@ const RegisterForm = () => {
   const router = useRouter();
   const { mutateAsync } = useMutation({
     mutationKey: ['register-cleaner'],
-    mutationFn: signUp,
+    mutationFn: cleanerSignUp, // Use cleanerSignUp
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const onSubmit = (data: RegisterFormData) => {
+  const onSubmit = (data: CleanerRegisterFormData) => {
     mutateAsync(
       {
         name: data.name,
         email: data.email,
         password: data.password,
-        role: 'cleaner',
-        licenseNumber: data.licenseNumber,
+        role: 'Cleaner',
         phone: data.phone,
       },
       {
@@ -149,28 +138,6 @@ const RegisterForm = () => {
           name="phone"
         />
         {errors.phone && <Text style={styles.errorText}>{errors.phone.message}</Text>}
-
-        {/* License Number Input */}
-        <Controller
-          control={control}
-          rules={{
-            required: 'License number is required',
-          }}
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              onBlur={onBlur}
-              onChangeText={onChange}
-              placeholder="License Number"
-              value={value}
-              mode="outlined"
-              style={styles.input}
-            />
-          )}
-          name="licenseNumber"
-        />
-        {errors.licenseNumber && (
-          <Text style={styles.errorText}>{errors.licenseNumber.message}</Text>
-        )}
 
         {/* Password Input */}
         <Controller

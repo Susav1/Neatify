@@ -8,8 +8,15 @@ import { signUp } from '@/services/auth.service';
 import type { RegisterFormData } from '../types/form';
 
 const RegisterForm = () => {
-  const { control, handleSubmit, formState: { errors }, watch, reset } = useForm<RegisterFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    reset,
+  } = useForm<RegisterFormData>({
     defaultValues: {
+      name: '', // Added name field
       email: '',
       password: '',
       confirmPassword: '',
@@ -25,34 +32,75 @@ const RegisterForm = () => {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added loading state
 
-  const onSubmit = (data: RegisterFormData) => {
-    mutateAsync(
-      {
-        email: data.email,
-        password: data.password,
-        role: 'User',
-      },
-      {
-        onSuccess: () => {
-          Alert.alert('Registration Successful!');
-          router.push('/(auth)/sign-in');
+  const onSubmit = async (data: RegisterFormData) => {
+    setIsSubmitting(true);
+    try {
+      await mutateAsync(
+        {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          role: 'User',
         },
-        onError: () => {
-          Alert.alert('Error while registering, please try later!');
-        },
-      }
-    );
-    reset();
+        {
+          onSuccess: () => {
+            Alert.alert('Registration Successful!');
+            router.push('/(auth)/sign-in');
+          },
+          onError: (error: any) => {
+            console.log('Registration error:', error.response?.data);
+            const errorMessage =
+              error.response?.data?.errors?.[0]?.message ||
+              error.response?.data?.message ||
+              'Error while registering, please try later!';
+            Alert.alert('Registration Failed', errorMessage);
+          },
+        }
+      );
+    } finally {
+      setIsSubmitting(false);
+      reset();
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text variant="headlineMedium" style={styles.title}>Neatify</Text>
+      <Text variant="headlineMedium" style={styles.title}>
+        Neatify
+      </Text>
       <Text style={styles.tagline}>Book a Clean, Live Serene!</Text>
 
-      <Text variant="titleMedium" style={styles.registerTitle}>Signup</Text>
+      <Text variant="titleMedium" style={styles.registerTitle}>
+        Signup
+      </Text>
 
+      {/* Name Input */}
+      <Controller
+        control={control}
+        rules={{
+          required: 'Name is required',
+          minLength: {
+            value: 2,
+            message: 'Name must be at least 2 characters',
+          },
+        }}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <TextInput
+            onBlur={onBlur}
+            onChangeText={onChange}
+            placeholder="Full Name"
+            value={value}
+            mode="outlined"
+            style={styles.input}
+          />
+        )}
+        name="name"
+      />
+      {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
+
+      {/* Email Input */}
       <Controller
         control={control}
         rules={{
@@ -83,6 +131,10 @@ const RegisterForm = () => {
         control={control}
         rules={{
           required: 'Password is required',
+          minLength: {
+            value: 6,
+            message: 'Password must be at least 6 characters',
+          },
         }}
         render={({ field: { onChange, onBlur, value } }) => (
           <View style={styles.passwordContainer}>
@@ -135,15 +187,18 @@ const RegisterForm = () => {
         )}
         name="confirmPassword"
       />
-      {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
+      {errors.confirmPassword && (
+        <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>
+      )}
 
       <Button
         mode="contained"
         onPress={handleSubmit(onSubmit)}
         style={styles.registerButton}
         labelStyle={styles.registerButtonText}
-      >
-        Signup
+        loading={isSubmitting}
+        disabled={isSubmitting}>
+        {isSubmitting ? 'Signing Up...' : 'Signup'}
       </Button>
 
       <Text style={styles.orText}>or</Text>
@@ -155,6 +210,7 @@ const RegisterForm = () => {
   );
 };
 
+// Keep your existing styles unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,

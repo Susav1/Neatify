@@ -39,3 +39,17 @@ export type ForgotPasswordFormData = {
 export interface ForgotPasswordResponse {
   password: string;
 }
+
+export type CleanerLoginFormData = {
+  email: string;
+  password: string;
+};
+
+export type CleanerRegisterFormData = {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: 'Cleaner';
+  phone: string;
+};

@@ -2,18 +2,21 @@ import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { TextInput, Button, Text, IconButton } from 'react-native-paper';
-import { Link } from 'expo-router';
-
-import type { LoginFormData } from '../../types/form';
+import { Link, router } from 'expo-router'; // Changed from useRouter to router
 import { useAuth } from '@/context/auth-context';
+import { CleanerLoginFormData } from '@/types/form';
+import { cleanerLogin } from '@/services/auth.service';
 
-const LoginForm = () => {
+const CleanerLoginForm = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Added loading state
+
   const {
     control,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<LoginFormData>({
+  } = useForm<CleanerLoginFormData>({
     defaultValues: {
       email: '',
       password: '',
@@ -21,15 +24,20 @@ const LoginForm = () => {
   });
 
   const { onLogin } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
 
-  const onSubmit = (data: LoginFormData) => {
-    onLogin({
-      email: data.email,
-      password: data.password,
-    });
-
-    reset();
+  const onSubmit = async (data: CleanerLoginFormData) => {
+    setIsLoading(true);
+    try {
+      const response = await cleanerLogin(data);
+      onLogin(response);
+      router.replace('/cleaner/Home'); // Using router directly
+    } catch (error) {
+      console.error('Login error:', error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsLoading(false);
+      reset();
+    }
   };
 
   return (
@@ -37,10 +45,10 @@ const LoginForm = () => {
       <Text variant="headlineMedium" style={styles.title}>
         Neatify
       </Text>
-      <Text style={styles.tagline}>test</Text>
+      <Text style={styles.tagline}>Professional Cleaning Services</Text>
 
       <Text variant="titleMedium" style={styles.loginTitle}>
-        Login
+        Cleaner Login
       </Text>
 
       <Controller
@@ -104,14 +112,16 @@ const LoginForm = () => {
         mode="contained"
         onPress={handleSubmit(onSubmit)}
         style={styles.loginButton}
-        labelStyle={styles.loginButtonText}>
-        Login
+        labelStyle={styles.loginButtonText}
+        loading={isLoading}
+        disabled={isLoading}>
+        {isLoading ? 'Logging in...' : 'Login'}
       </Button>
 
       <Text style={styles.orText}>or</Text>
 
       <Link style={styles.registerLink} href="/(auth)/cleaner-sign-up">
-        Signup
+        Sign Up as Cleaner
       </Link>
     </View>
   );
@@ -124,7 +134,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#F4F8F7',
   },
-
   title: {
     fontSize: 42,
     fontWeight: 'bold',
@@ -132,21 +141,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 5,
   },
-
   tagline: {
     fontSize: 18,
     color: '#666',
     textAlign: 'center',
     marginBottom: 20,
   },
-
   loginTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 10,
   },
-
   input: {
     width: '100%',
     height: 50,
@@ -155,24 +161,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#fff',
   },
-
   passwordContainer: {
     position: 'relative',
   },
-
   eyeIcon: {
     position: 'absolute',
     top: '32%',
     right: 15,
     transform: [{ translateY: -12 }],
   },
-
   errorText: {
     color: 'red',
     fontSize: 12,
     marginBottom: 8,
   },
-
   forgotPassword: {
     alignSelf: 'flex-end',
     color: '#27AE60',
@@ -180,7 +182,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textDecorationLine: 'underline',
   },
-
   loginButton: {
     backgroundColor: '#27AE60',
     height: 45,
@@ -190,13 +191,11 @@ const styles = StyleSheet.create({
     width: '70%',
     marginTop: 10,
   },
-
   loginButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
   },
-
   orText: {
     fontSize: 18,
     textAlign: 'center',
@@ -204,7 +203,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     color: '#808080',
   },
-
   registerLink: {
     backgroundColor: '#2ECC71',
     height: 45,
@@ -221,4 +219,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginForm;
+export default CleanerLoginForm;

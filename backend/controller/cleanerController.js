@@ -28,7 +28,6 @@ const registerCleaner = async (req, res) => {
         password: hashedPassword,
         role: "Cleaner",
         name: req.body.name,
-        licenseNumber: req.body.licenseNumber,
         phone: req.body.phone,
       },
     });
