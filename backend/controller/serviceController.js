@@ -40,7 +40,13 @@ const getAllServices = async (req, res) => {
 
 const getServiceById = async (req, res) => {
   try {
-    const service = await Service.findById(req.params.id);
+    const service = await prisma.service.findUnique({
+      where: { id: req.params.id },
+      include: {
+        category: true, // Include category details
+        reviews: true, // Include reviews if needed
+      },
+    });
     if (!service) {
       return res.status(404).json({ message: "Service not found" });
     }

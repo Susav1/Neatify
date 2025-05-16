@@ -9,6 +9,7 @@ const paymentRoutes = require("./routes/paymentRouter");
 const serviceRouter = require("./routes/serviceRouter");
 const cleanerRouter = require("./routes/cleanerRouter");
 const categoryRoute = require("./routes/categoryRoute");
+const profileRouter = require("./routes/profileRouter");
 const path = require("path");
 
 app.use(cookieParser());
@@ -29,6 +30,7 @@ app.use("/services", serviceRouter);
 app.use("/cleaners", cleanerRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/category", categoryRoute);
+// app.use("/profile", profileRouter);
 app.use(
   "/uploads/icons",
   express.static(path.join(__dirname, "uploads/icons"))
