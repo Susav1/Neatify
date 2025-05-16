@@ -1,135 +1,114 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
   Image,
-  Alert,
   ScrollView,
   Share,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import Khalti from './khalti/Khalti';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { getServiceById } from '../services/service.service';
+import { useAuth } from '../context/auth-context';
+
+interface BookingOverlayProps {
+  visible: boolean;
+  onClose: () => void;
+  onSubmit: (bookingData: BookingData) => void;
+  servicePrice: number;
+  serviceId: string;
+  duration: number;
+}
+
+// Placeholder for BookingOverlay
+const BookingOverlay: React.FC<BookingOverlayProps> = ({
+  visible,
+  onClose,
+  onSubmit,
+  servicePrice,
+  serviceId,
+  duration,
+}) => {
+  if (!visible) return null;
+  return (
+    <View style={styles.bookingOverlay}>
+      <Text style={styles.bookingOverlayText}>Booking Overlay Placeholder</Text>
+      <TouchableOpacity onPress={onClose}>
+        <Text style={styles.bookingOverlayClose}>Close</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 interface CleaningServiceViewProps {
   setCurrentPage: (page: string) => void;
+  serviceId: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: number;
+  image?: string;
+  category: { name: string };
+  reviews: Review[];
 }
 
 interface Review {
   id: string;
-  name: string;
-  avatar: string;
   rating: number;
-  date: string;
-  comment: string;
+  comment?: string;
+  user: { name: string };
+  createdAt: string;
 }
 
-const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPage }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    address: '',
-    notes: '',
-  });
-  const [bookingMode, setBookingMode] = useState(false);
+interface BookingData {
+  date: Date;
+  time: Date;
+  location: string;
+  paymentMethod: 'cash' | 'khalti';
+}
+
+const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPage, serviceId }) => {
+  const { authState } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [showBookingOverlay, setShowBookingOverlay] = useState(false);
+  const [service, setService] = useState<Service | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const servicePrice = 2000;
+  useEffect(() => {
+    const fetchService = async () => {
+      try {
+        setLoading(true);
+        const serviceData = await getServiceById(serviceId);
+        setService(serviceData);
+      } catch (err) {
+        setError('Failed to load service details. Please try again.');
+        console.error('Error fetching service:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Sample reviews data
-  const reviews: Review[] = [
-    {
-      id: '1',
-      name: 'Rajesh Kumar',
-      avatar:
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
-      rating: 5,
-      date: '2 days ago',
-      comment:
-        'Excellent service! The team was very professional and thorough. My house has never been cleaner. Would definitely recommend to anyone looking for quality cleaning services.',
-    },
-    {
-      id: '2',
-      name: 'Priya Sharma',
-      avatar:
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
-      rating: 4,
-      date: '1 week ago',
-      comment:
-        'Good service overall. They were a bit late but did a great job once they arrived. The bathroom and kitchen are spotless.',
-    },
-    {
-      id: '3',
-      name: 'Anil Thapa',
-      avatar:
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
-      rating: 5,
-      date: '2 weeks ago',
-      comment:
-        'Very satisfied with the cleaning. The team was punctual and efficient. They paid attention to details and used eco-friendly products as promised.',
-    },
-    {
-      id: '4',
-      name: 'Sunita Rai',
-      avatar:
-        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
-      rating: 4,
-      date: '3 weeks ago',
-      comment:
-        'Great service at a reasonable price. The cleaners were friendly and did a thorough job. Will book again.',
-    },
-  ];
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const isValidPhone = (phone: string) => {
-    return /^\d{10}$/.test(phone);
-  };
-
-  const validateForm = () => {
-    if (!formData.name || !formData.phone || !formData.address) {
-      Alert.alert('Error', 'Please fill all required fields');
-      return false;
+    if (serviceId) {
+      fetchService();
     }
-
-    if (!isValidPhone(formData.phone)) {
-      Alert.alert('Error', 'Please enter a valid 10-digit phone number');
-      return false;
-    }
-
-    return true;
-  };
-
-  const handlePaymentSuccess = () => {
-    Alert.alert(
-      'Booking Confirmed',
-      `Thank you, ${formData.name}. Your cleaning service is booked.`,
-      [
-        {
-          text: 'OK',
-          onPress: () => setCurrentPage('Home'),
-        },
-      ]
-    );
-  };
-
-  const handlePaymentError = (error: string) => {
-    Alert.alert('Payment Error', error);
-  };
+  }, [serviceId]);
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: 'Check out this amazing home cleaning service!',
+        message: `Check out ${service?.name} on Neatify!`,
       });
     } catch (error) {
       console.log(error);
@@ -138,17 +117,26 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
-  };
-
-  const toggleBookingMode = () => {
-    setBookingMode(!bookingMode);
+    // TODO: Implement favorite functionality (e.g., save to backend)
   };
 
   const toggleShowAllReviews = () => {
     setShowAllReviews(!showAllReviews);
   };
 
-  // Render stars based on rating
+  const handleBookNow = () => {
+    if (!authState.authenticated) {
+      Alert.alert('Please log in to book a service.');
+      return;
+    }
+    setShowBookingOverlay(true);
+  };
+
+  const handleBookingSubmit = (bookingData: BookingData) => {
+    console.log('Booking submitted:', { serviceId, ...bookingData });
+    // TODO: Implement booking submission to backend
+  };
+
   const renderStars = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -165,6 +153,35 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
     return stars;
   };
 
+  const calculateAverageRating = (): string => {
+    if (!service?.reviews || service.reviews.length === 0) return '0.0';
+    const total = service.reviews.reduce((sum, review) => sum + review.rating, 0);
+    return (total / service.reviews.length).toFixed(1);
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#27AE60" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !service) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error || 'Service not found.'}</Text>
+          <TouchableOpacity onPress={() => setCurrentPage('Home')}>
+            <Text style={styles.backLink}>Back to Home</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -173,6 +190,18 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
           <TouchableOpacity style={styles.backBtn} onPress={() => setCurrentPage('Home')}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
           </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity onPress={handleShare} style={styles.headerActionBtn}>
+              <Ionicons name="share-social-outline" size={20} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={toggleFavorite} style={styles.headerActionBtn}>
+              <Ionicons
+                name={isFavorite ? 'bookmark' : 'bookmark-outline'}
+                size={20}
+                color={isFavorite ? '#fff' : '#fff'}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Main content */}
@@ -180,82 +209,72 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
           {/* Service image */}
           <Image
             source={{
-              uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
+              uri: service.image || 'https://shorturl.at/PEb19',
             }}
             style={styles.serviceImage}
           />
 
           {/* Service title section */}
           <View style={styles.serviceTitleContainer}>
-            <Text style={styles.serviceTitle}>Home Cleaning Service</Text>
-
-            <View style={styles.actionIcons}>
-              <TouchableOpacity onPress={handleShare} style={styles.iconButton}>
-                <Ionicons name="share-social-outline" size={22} color="#333" />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={toggleFavorite} style={styles.iconButton}>
-                <Ionicons
-                  name={isFavorite ? 'bookmark' : 'bookmark-outline'}
-                  size={22}
-                  color={isFavorite ? '#D81B60' : '#333'}
-                />
-              </TouchableOpacity>
+            <Text style={styles.serviceTitle}>{service.name}</Text>
+            <View style={styles.ratingContainer}>
+              <Ionicons name="star" size={16} color="#FFD700" />
+              <Text style={styles.ratingText}>
+                {calculateAverageRating()} ({service.reviews.length} Reviews)
+              </Text>
             </View>
           </View>
 
           {/* Provider info */}
           <View style={styles.providerInfo}>
-            <Text style={styles.providerName}>Clean Home Services</Text>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={16} color="#FFD700" />
-              <Text style={styles.ratingText}>4.8 (98 Reviews)</Text>
+            <View style={styles.providerBadge}>
+              <MaterialIcons name="verified" size={16} color="#27AE60" />
+              <Text style={styles.providerName}>Neatify Services</Text>
             </View>
-          </View>
-
-          {/* Location */}
-          <View style={styles.locationContainer}>
-            <Ionicons name="location-outline" size={18} color="#666" />
-            <Text style={styles.locationText}>Kathmandu, Nepal</Text>
+            <View style={styles.locationContainer}>
+              <Ionicons name="location-outline" size={16} color="#666" />
+              <Text style={styles.locationText}>Kathmandu, Nepal</Text>
+            </View>
           </View>
 
           {/* Price */}
           <View style={styles.priceContainer}>
-            <Text style={styles.priceAmount}>NPR {servicePrice}</Text>
+            <Text style={styles.priceAmount}>NPR {service.price}</Text>
             <Text style={styles.priceUnit}>(per service)</Text>
           </View>
 
           {/* About section */}
           <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>About this service</Text>
-            </View>
-            <Text style={styles.sectionContent}>
-              We offer professional home cleaning services using eco-friendly products. Our team of
-              experienced cleaners will make your home spotless and fresh.
-              <Text style={styles.readMore}> Read More...</Text>
-            </Text>
+            <Text style={styles.sectionTitle}>About this service</Text>
+            <Text style={styles.sectionContent}>{service.description}</Text>
           </View>
 
           {/* Service details */}
           <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Service Details</Text>
-            </View>
+            <Text style={styles.sectionTitle}>Service Details</Text>
             <View style={styles.detailsGrid}>
               <View style={styles.detailItem}>
-                <Ionicons name="time-outline" size={20} color="#666" />
-                <Text style={styles.detailText}>2-3 hours</Text>
+                <View style={styles.detailIcon}>
+                  <Ionicons name="time-outline" size={18} color="#27AE60" />
+                </View>
+                <Text style={styles.detailText}>{service.duration} hours</Text>
               </View>
               <View style={styles.detailItem}>
-                <Ionicons name="home-outline" size={20} color="#666" />
-                <Text style={styles.detailText}>All rooms</Text>
+                <View style={styles.detailIcon}>
+                  <Ionicons name="home-outline" size={18} color="#27AE60" />
+                </View>
+                <Text style={styles.detailText}>{service.category.name}</Text>
               </View>
               <View style={styles.detailItem}>
-                <Ionicons name="checkmark-circle-outline" size={20} color="#666" />
+                <View style={styles.detailIcon}>
+                  <Ionicons name="checkmark-circle-outline" size={18} color="#27AE60" />
+                </View>
                 <Text style={styles.detailText}>Eco-friendly</Text>
               </View>
               <View style={styles.detailItem}>
-                <Ionicons name="people-outline" size={20} color="#666" />
+                <View style={styles.detailIcon}>
+                  <Ionicons name="people-outline" size={18} color="#27AE60" />
+                </View>
                 <Text style={styles.detailText}>Professional team</Text>
               </View>
             </View>
@@ -265,30 +284,23 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Photos & Videos</Text>
-              <Text style={styles.seeAll}>See All</Text>
+              <TouchableOpacity>
+                <Text style={styles.seeAll}>See All</Text>
+              </TouchableOpacity>
             </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.photosScroll}>
-              <Image
-                source={{
-                  uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
-                }}
-                style={styles.photoThumbnail}
-              />
-              <Image
-                source={{
-                  uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
-                }}
-                style={styles.photoThumbnail}
-              />
-              <Image
-                source={{
-                  uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGZm4LOxlpZfTWZj6Nqyh5--85yGqxQu-D6w&s',
-                }}
-                style={styles.photoThumbnail}
-              />
+              {[1, 2, 3].map((item) => (
+                <Image
+                  key={item}
+                  source={{
+                    uri: service.image || 'https://shorturl.at/zpU6H',
+                  }}
+                  style={styles.photoThumbnail}
+                />
+              ))}
             </ScrollView>
           </View>
 
@@ -296,140 +308,102 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Reviews</Text>
-              <Text style={styles.seeAll} onPress={toggleShowAllReviews}>
-                {showAllReviews ? 'Show Less' : 'See All'}
-              </Text>
+              <TouchableOpacity onPress={toggleShowAllReviews}>
+                <Text style={styles.seeAll}>{showAllReviews ? 'Show Less' : 'See All'}</Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.reviewsSummary}>
               <View style={styles.reviewsRatingContainer}>
-                <Text style={styles.reviewsRatingNumber}>4.8</Text>
+                <Text style={styles.reviewsRatingNumber}>{calculateAverageRating()}</Text>
                 <View style={styles.reviewsStarsRow}>
-                  <Ionicons name="star" size={16} color="#FFD700" />
-                  <Ionicons name="star" size={16} color="#FFD700" />
-                  <Ionicons name="star" size={16} color="#FFD700" />
-                  <Ionicons name="star" size={16} color="#FFD700" />
-                  <Ionicons name="star-half" size={16} color="#FFD700" />
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Ionicons
+                      key={i}
+                      name={
+                        i <= Math.floor(parseFloat(calculateAverageRating()))
+                          ? 'star'
+                          : 'star-outline'
+                      }
+                      size={16}
+                      color="#FFD700"
+                    />
+                  ))}
                 </View>
-                <Text style={styles.reviewsCount}>98 reviews</Text>
+                <Text style={styles.reviewsCount}>{service.reviews.length} reviews</Text>
               </View>
 
               <View style={styles.reviewsRatingBars}>
-                <View style={styles.ratingBarRow}>
-                  <Text style={styles.ratingBarLabel}>5</Text>
-                  <View style={styles.ratingBarContainer}>
-                    <View style={[styles.ratingBarFill, { width: '80%' }]} />
-                  </View>
-                </View>
-                <View style={styles.ratingBarRow}>
-                  <Text style={styles.ratingBarLabel}>4</Text>
-                  <View style={styles.ratingBarContainer}>
-                    <View style={[styles.ratingBarFill, { width: '15%' }]} />
-                  </View>
-                </View>
-                <View style={styles.ratingBarRow}>
-                  <Text style={styles.ratingBarLabel}>3</Text>
-                  <View style={styles.ratingBarContainer}>
-                    <View style={[styles.ratingBarFill, { width: '5%' }]} />
-                  </View>
-                </View>
-                <View style={styles.ratingBarRow}>
-                  <Text style={styles.ratingBarLabel}>2</Text>
-                  <View style={styles.ratingBarContainer}>
-                    <View style={[styles.ratingBarFill, { width: '0%' }]} />
-                  </View>
-                </View>
-                <View style={styles.ratingBarRow}>
-                  <Text style={styles.ratingBarLabel}>1</Text>
-                  <View style={styles.ratingBarContainer}>
-                    <View style={[styles.ratingBarFill, { width: '0%' }]} />
-                  </View>
-                </View>
+                {[5, 4, 3, 2, 1].map((rating) => {
+                  const count = service.reviews.filter((r) => r.rating === rating).length;
+                  const percentage =
+                    service.reviews.length > 0 ? (count / service.reviews.length) * 100 : 0;
+                  return (
+                    <View key={rating} style={styles.ratingBarRow}>
+                      <Text style={styles.ratingBarLabel}>{rating}</Text>
+                      <View style={styles.ratingBarContainer}>
+                        <View style={[styles.ratingBarFill, { width: `${percentage}%` }]} />
+                      </View>
+                    </View>
+                  );
+                })}
               </View>
             </View>
 
-            {/* Individual reviews */}
-            {reviews.slice(0, showAllReviews ? reviews.length : 2).map((review) => (
+            {service.reviews.slice(0, showAllReviews ? service.reviews.length : 2).map((review) => (
               <View key={review.id} style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
-                  <Image source={{ uri: review.avatar }} style={styles.reviewerAvatar} />
+                  <Image
+                    source={{ uri: 'https://shorturl.at/PEb19' }}
+                    style={styles.reviewerAvatar}
+                  />
                   <View style={styles.reviewerInfo}>
-                    <Text style={styles.reviewerName}>{review.name}</Text>
+                    <Text style={styles.reviewerName}>{review.user.name}</Text>
                     <View style={styles.reviewRatingRow}>
                       <View style={{ flexDirection: 'row' }}>{renderStars(review.rating)}</View>
-                      <Text style={styles.reviewDate}>{review.date}</Text>
+                      <Text style={styles.reviewDate}>
+                        {new Date(review.createdAt).toLocaleDateString()}
+                      </Text>
                     </View>
                   </View>
                 </View>
-                <Text style={styles.reviewComment}>{review.comment}</Text>
+                <Text style={styles.reviewComment}>{review.comment || 'No comment provided.'}</Text>
               </View>
             ))}
 
-            {!showAllReviews && reviews.length > 2 && (
+            {!showAllReviews && service.reviews.length > 2 && (
               <TouchableOpacity style={styles.showMoreReviewsButton} onPress={toggleShowAllReviews}>
-                <Text style={styles.showMoreReviewsText}>Show All Reviews ({reviews.length})</Text>
+                <Text style={styles.showMoreReviewsText}>
+                  Show All Reviews ({service.reviews.length})
+                </Text>
               </TouchableOpacity>
             )}
           </View>
+        </View>
 
-          {/* Booking form (conditionally rendered) */}
-          {bookingMode && (
-            <View style={styles.bookingForm}>
-              <Text style={styles.formTitle}>Your Information</Text>
+        {/* Bottom action buttons */}
+        <View style={styles.bottomActions}>
+          <TouchableOpacity style={styles.messageButton}>
+            <Ionicons name="chatbubble-outline" size={20} color="#27AE60" />
+            <Text style={styles.messageButtonText}>Message</Text>
+          </TouchableOpacity>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Full Name*"
-                value={formData.name}
-                onChangeText={(text) => handleInputChange('name', text)}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Phone Number*"
-                keyboardType="phone-pad"
-                value={formData.phone}
-                onChangeText={(text) => handleInputChange('phone', text)}
-                maxLength={10}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Address*"
-                value={formData.address}
-                onChangeText={(text) => handleInputChange('address', text)}
-              />
-
-              <TextInput
-                style={[styles.input, styles.notesInput]}
-                multiline
-                placeholder="Additional Notes"
-                value={formData.notes}
-                onChangeText={(text) => handleInputChange('notes', text)}
-              />
-
-              <Khalti
-                payment={servicePrice}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-                beforePaymentValidation={validateForm}
-              />
-            </View>
-          )}
+          <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
+            <Text style={styles.bookButtonText}>Book Now</Text>
+            <Text style={styles.bookButtonPrice}>NPR {service.price}</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Bottom action buttons */}
-      <View style={styles.bottomActions}>
-        <TouchableOpacity style={styles.messageButton}>
-          <Ionicons name="chatbubble-outline" size={20} color="#D81B60" />
-          <Text style={styles.messageButtonText}>Message</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.bookButton} onPress={toggleBookingMode}>
-          <Text style={styles.bookButtonText}>{bookingMode ? 'Cancel' : 'Book Now'}</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Booking Overlay */}
+      <BookingOverlay
+        visible={showBookingOverlay}
+        onClose={() => setShowBookingOverlay(false)}
+        onSubmit={handleBookingSubmit}
+        servicePrice={service.price}
+        serviceId={service.id}
+        duration={service.duration}
+      />
     </SafeAreaView>
   );
 };
@@ -441,97 +415,120 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
+    paddingBottom: 90,
   },
   header: {
-    height: 180,
-    backgroundColor: '#64B5F6',
+    height: 200,
+    backgroundColor: '#27AE60',
     position: 'relative',
+    paddingTop: 40,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   backBtn: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+  },
+  headerActions: {
+    flexDirection: 'row',
+  },
+  headerActionBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
   },
   mainContent: {
     flex: 1,
-    marginTop: -120,
-    paddingBottom: 80, // Space for bottom buttons
+    marginTop: -80,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    backgroundColor: '#fff',
+    paddingBottom: 20,
   },
   serviceImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 10,
-    marginHorizontal: 20,
+    width: 140,
+    height: 140,
+    borderRadius: 12,
+    alignSelf: 'center',
     borderWidth: 4,
     borderColor: '#fff',
+    marginTop: -70,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   serviceTitleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: 20,
-    marginTop: 15,
+    marginTop: 20,
+    alignItems: 'center',
   },
   serviceTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    flex: 1,
-  },
-  actionIcons: {
-    flexDirection: 'row',
-  },
-  iconButton: {
-    padding: 8,
-  },
-  providerInfo: {
-    paddingHorizontal: 20,
-    marginTop: 5,
-  },
-  providerName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    textAlign: 'center',
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 8,
   },
   ratingText: {
-    marginLeft: 4,
+    marginLeft: 5,
     fontSize: 14,
     color: '#666',
+  },
+  providerInfo: {
+    paddingHorizontal: 20,
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  providerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  providerName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#27AE60',
+    marginLeft: 5,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 10,
+    marginTop: 8,
   },
   locationText: {
-    marginLeft: 4,
+    marginLeft: 5,
     fontSize: 14,
     color: '#666',
   },
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    paddingHorizontal: 20,
+    justifyContent: 'center',
     marginTop: 15,
-    marginBottom: 10,
+    marginBottom: 5,
   },
   priceAmount: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#D81B60',
+    color: '#27AE60',
   },
   priceUnit: {
     fontSize: 14,
@@ -540,13 +537,13 @@ const styles = StyleSheet.create({
   },
   sectionContainer: {
     paddingHorizontal: 20,
-    marginTop: 20,
+    marginTop: 25,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 18,
@@ -555,20 +552,18 @@ const styles = StyleSheet.create({
   },
   seeAll: {
     fontSize: 14,
-    color: '#D81B60',
+    color: '#27AE60',
+    fontWeight: '500',
   },
   sectionContent: {
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
     color: '#666',
-  },
-  readMore: {
-    color: '#D81B60',
   },
   detailsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 5,
+    marginTop: 10,
   },
   detailItem: {
     flexDirection: 'row',
@@ -576,8 +571,16 @@ const styles = StyleSheet.create({
     width: '50%',
     marginBottom: 15,
   },
+  detailIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
   detailText: {
-    marginLeft: 8,
     fontSize: 14,
     color: '#666',
   },
@@ -585,12 +588,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   photoThumbnail: {
-    width: 120,
-    height: 90,
-    borderRadius: 8,
-    marginRight: 10,
+    width: 140,
+    height: 100,
+    borderRadius: 10,
+    marginRight: 12,
   },
-  // Reviews section styles
   reviewsSummary: {
     flexDirection: 'row',
     marginBottom: 20,
@@ -600,7 +602,7 @@ const styles = StyleSheet.create({
   },
   reviewsRatingContainer: {
     alignItems: 'center',
-    marginRight: 20,
+    marginRight: 25,
     width: 80,
   },
   reviewsRatingNumber: {
@@ -644,7 +646,7 @@ const styles = StyleSheet.create({
   },
   reviewItem: {
     marginBottom: 20,
-    paddingBottom: 20,
+    paddingBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
@@ -682,18 +684,17 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   showMoreReviewsButton: {
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#27AE60',
     borderRadius: 8,
-    marginTop: 5,
+    marginTop: 10,
   },
   showMoreReviewsText: {
-    color: '#D81B60',
+    color: '#27AE60',
     fontWeight: '500',
   },
-  // Bottom actions and booking form
   bottomActions: {
     position: 'absolute',
     bottom: 0,
@@ -704,6 +705,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   messageButton: {
     flex: 1,
@@ -713,12 +719,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#D81B60',
+    borderColor: '#27AE60',
     borderRadius: 8,
   },
   messageButtonText: {
     marginLeft: 8,
-    color: '#D81B60',
+    color: '#27AE60',
     fontWeight: '500',
   },
   bookButton: {
@@ -726,7 +732,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    backgroundColor: '#D81B60',
+    backgroundColor: '#27AE60',
     borderRadius: 8,
   },
   bookButtonText: {
@@ -734,28 +740,47 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  bookingForm: {
-    paddingHorizontal: 20,
-    marginTop: 20,
+  bookButtonPrice: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    marginTop: 2,
   },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 15,
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
     fontSize: 16,
-    backgroundColor: '#fff',
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  notesInput: {
-    height: 100,
-    textAlignVertical: 'top',
+  backLink: {
+    fontSize: 16,
+    color: '#27AE60',
+    fontWeight: '500',
+  },
+  bookingOverlay: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  bookingOverlayText: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 10,
+  },
+  bookingOverlayClose: {
+    fontSize: 16,
+    color: '#27AE60',
   },
 });
 
