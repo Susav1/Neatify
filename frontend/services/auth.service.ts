@@ -25,7 +25,6 @@ export const login = async ({ email, password }: { email: string; password: stri
     email,
     password,
   });
-
   return response.data;
 };
 

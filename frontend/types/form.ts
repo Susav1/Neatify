@@ -53,3 +53,19 @@ export type CleanerRegisterFormData = {
   role: 'Cleaner';
   phone: string;
 };
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  profilePicture?: string;
+}
+
+interface AuthProps {
+  token: string | null;
+  authenticated: boolean | null;
+  user: User | null;
+  onLogin: (token: string, user: User) => void;
+  onLogout: () => void;
+  updateUser: (userData: Partial<User>) => void;
+}

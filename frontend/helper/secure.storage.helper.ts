@@ -22,5 +22,5 @@ export const secureStore = {
     } catch (error) {
       console.error(`Failed to delete item: ${key}`, error);
     }
-  }
+  },
 };

@@ -14,7 +14,7 @@ export const createService = async (serviceData) => {
 // Get all services
 export const getAllServices = async () => {
   try {
-    const response = await api.get('/services/get');
+    const response = await api.get('/services');
     return response.data;
   } catch (error) {
     console.error('Error fetching services:', error);
