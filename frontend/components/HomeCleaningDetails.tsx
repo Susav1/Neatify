@@ -15,36 +15,9 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { getServiceById } from '../services/service.service';
+import { createBooking } from '../services/booking.service';
 import { useAuth } from '../context/auth-context';
-
-interface BookingOverlayProps {
-  visible: boolean;
-  onClose: () => void;
-  onSubmit: (bookingData: BookingData) => void;
-  servicePrice: number;
-  serviceId: string;
-  duration: number;
-}
-
-// Placeholder for BookingOverlay
-const BookingOverlay: React.FC<BookingOverlayProps> = ({
-  visible,
-  onClose,
-  onSubmit,
-  servicePrice,
-  serviceId,
-  duration,
-}) => {
-  if (!visible) return null;
-  return (
-    <View style={styles.bookingOverlay}>
-      <Text style={styles.bookingOverlayText}>Booking Overlay Placeholder</Text>
-      <TouchableOpacity onPress={onClose}>
-        <Text style={styles.bookingOverlayClose}>Close</Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
+import BookingOverlay from './BookingOverlay'; // Adjust path as needed
 
 interface CleaningServiceViewProps {
   setCurrentPage: (page: string) => void;
@@ -71,10 +44,11 @@ interface Review {
 }
 
 interface BookingData {
-  date: Date;
-  time: Date;
+  date: string;
+  time: string;
   location: string;
-  paymentMethod: 'cash' | 'khalti';
+  paymentMethod: 'CASH' | 'KHALTI';
+  duration: number;
 }
 
 const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPage, serviceId }) => {
@@ -111,13 +85,13 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
         message: `Check out ${service?.name} on Neatify!`,
       });
     } catch (error) {
-      console.log(error);
+      console.log('Share error:', error);
     }
   };
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
-    // TODO: Implement favorite functionality (e.g., save to backend)
+    // TODO: Implement favorite functionality
   };
 
   const toggleShowAllReviews = () => {
@@ -125,16 +99,39 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
   };
 
   const handleBookNow = () => {
+    console.log('Book Now clicked, authState:', authState);
     if (!authState.authenticated) {
-      Alert.alert('Please log in to book a service.');
+      Alert.alert('Authentication Required', 'Please log in to book a service.', [
+        { text: 'OK', onPress: () => setCurrentPage('Login') },
+      ]);
       return;
     }
     setShowBookingOverlay(true);
+    console.log('BookingOverlay should be visible, showBookingOverlay:', true);
   };
 
-  const handleBookingSubmit = (bookingData: BookingData) => {
-    console.log('Booking submitted:', { serviceId, ...bookingData });
-    // TODO: Implement booking submission to backend
+  const handleBookingSubmit = async (bookingData: BookingData) => {
+    try {
+      if (!service) {
+        throw new Error('Service details not available');
+      }
+      const payload = {
+        serviceId: service.id,
+        date: bookingData.date,
+        time: bookingData.time,
+        location: bookingData.location,
+        paymentMethod: bookingData.paymentMethod,
+        duration: bookingData.duration,
+      };
+      console.log('Submitting booking payload:', payload);
+      const response = await createBooking(payload);
+      Alert.alert('Success', 'Booking created successfully!');
+      setShowBookingOverlay(false);
+      console.log('Booking response:', response);
+    } catch (error: any) {
+      console.error('Booking error:', error);
+      Alert.alert('Booking Failed', error.message || 'Failed to create booking. Please try again.');
+    }
   };
 
   const renderStars = (rating: number) => {
@@ -395,10 +392,12 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
         </View>
       </ScrollView>
 
-      {/* Booking Overlay */}
       <BookingOverlay
         visible={showBookingOverlay}
-        onClose={() => setShowBookingOverlay(false)}
+        onClose={() => {
+          console.log('Closing BookingOverlay');
+          setShowBookingOverlay(false);
+        }}
         onSubmit={handleBookingSubmit}
         servicePrice={service.price}
         serviceId={service.id}
@@ -766,21 +765,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#27AE60',
     fontWeight: '500',
-  },
-  bookingOverlay: {
-    padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  bookingOverlayText: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 10,
-  },
-  bookingOverlayClose: {
-    fontSize: 16,
-    color: '#27AE60',
   },
 });
 

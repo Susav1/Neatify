@@ -23,7 +23,7 @@ model User {
   role          Role
   licenseNumber String?
   phone         String?
-  bookings      Booking[]
+  bookings      Booking[] @relation("UserBookings")
   services      Service[]
   reviews       Review[]
   createdAt     DateTime  @default(now())
@@ -31,14 +31,15 @@ model User {
 }
 
 model Cleaner {
-  id        String   @id @default(uuid()) @map("_id")
-  email     String   @unique
+  id        String    @id @default(uuid()) @map("_id")
+  email     String    @unique
   password  String
   name      String
   role      Role
   phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Booking   Booking[]
 }
 
 model Service {
@@ -61,17 +62,22 @@ model Service {
 model Booking {
   id            String        @id @default(uuid()) @map("_id")
   userId        String
-  user          User          @relation(fields: [userId], references: [id])
+  user          User          @relation("UserBookings", fields: [userId], references: [id])
   serviceId     String
   service       Service       @relation(fields: [serviceId], references: [id])
+  cleanerId     String?
+  cleaner       Cleaner?      @relation(fields: [cleanerId], references: [id])
   date          DateTime
   time          String
   location      String
   paymentMethod PaymentMethod
+  paymentStatus String?       @default("PENDING") // Added for Khalti payment status
   status        BookingStatus @default(PENDING)
   notes         String?
   price         Float
   duration      Int
+  areas         String[]
+  pidx          String? // Khalti payment ID
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
