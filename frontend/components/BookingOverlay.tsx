@@ -48,6 +48,7 @@ const BookingOverlay: React.FC<BookingOverlayProps> = ({
 }) => {
   const { authState } = useAuth();
   const navigation = useNavigation<NavigationProp>();
+  const [isSubmitting, setIsSubmitting] = useState(false); // Add loading state
 
   useEffect(() => {
     console.log('BookingOverlay mounted, visible:', visible, 'serviceId:', serviceId);
@@ -108,22 +109,28 @@ const BookingOverlay: React.FC<BookingOverlayProps> = ({
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    setIsSubmitting(true);
+
     try {
       console.log('handleSubmit called, authState:', authState);
       if (!authState.authenticated) {
         Alert.alert('Authentication Required', 'Please log in to book a service', [
           { text: 'OK', onPress: onClose },
         ]);
+        setIsSubmitting(false);
         return;
       }
 
       if (!serviceId) {
         Alert.alert('Error', 'Service ID is missing. Please try again or contact support.');
         console.error('Missing serviceId in booking submission');
+        setIsSubmitting(false);
         return;
       }
 
       if (!validateInputs()) {
+        setIsSubmitting(false);
         return;
       }
 
@@ -154,12 +161,10 @@ const BookingOverlay: React.FC<BookingOverlayProps> = ({
       console.log('Submitting booking with payload:', bookingPayload);
 
       if (bookingData.paymentMethod === 'KHALTI') {
-        // Calculate payment amount (servicePrice * duration + service fee)
         const paymentAmount = servicePrice * bookingData.duration + Math.round(servicePrice * 0.05);
-        // Navigate to Khalti screen
         navigation.navigate('Khalti', { payment: paymentAmount });
+        setIsSubmitting(false);
       } else {
-        // Handle cash booking
         const response = await createBooking(bookingPayload);
         console.log('Booking response:', response);
         Alert.alert('Success', 'Booking created successfully!');
@@ -170,6 +175,8 @@ const BookingOverlay: React.FC<BookingOverlayProps> = ({
     } catch (error: any) {
       console.error('Booking error:', error);
       Alert.alert('Booking Failed', error.message || 'Failed to create booking. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -367,8 +374,13 @@ const BookingOverlay: React.FC<BookingOverlayProps> = ({
           </ScrollView>
 
           <View style={styles.modalFooter}>
-            <TouchableOpacity style={styles.confirmButton} onPress={handleSubmit}>
-              <Text style={styles.confirmButtonText}>Confirm Booking</Text>
+            <TouchableOpacity
+              style={[styles.confirmButton, isSubmitting && styles.disabledButton]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}>
+              <Text style={styles.confirmButtonText}>
+                {isSubmitting ? 'Processing...' : 'Confirm Booking'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -531,6 +543,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#a0a0a0',
   },
   confirmButtonText: {
     color: '#fff',

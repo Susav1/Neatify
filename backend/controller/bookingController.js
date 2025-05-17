@@ -52,6 +52,26 @@ const createBooking = async (req, res) => {
       });
     }
 
+    // Check for duplicate booking
+    const existingBooking = await prisma.booking.findFirst({
+      where: {
+        userId,
+        serviceId,
+        date: bookingDate,
+        time,
+        status: { not: "CANCELLED" }, // Ignore cancelled bookings
+      },
+    });
+
+    if (existingBooking) {
+      return res.status(400).json({
+        success: false,
+        error: "Duplicate booking",
+        message: "A booking for this service, date, and time already exists",
+        code: "DUPLICATE_BOOKING",
+      });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
@@ -88,7 +108,7 @@ const createBooking = async (req, res) => {
         {
           return_url: "http://localhost:8081/payment/verify",
           website_url: "http://localhost:8081/",
-          amount: (service.price * duration * 100).toFixed(0), // Convert to paisa
+          amount: (service.price * duration * 100).toFixed(0),
           purchase_order_id: `booking_${Date.now()}`,
           purchase_order_name: service.name,
           customer_info: {
@@ -107,10 +127,30 @@ const createBooking = async (req, res) => {
       pidx = paymentResponse.data.pidx;
     }
 
+    const cleaners = await prisma.cleaner.findMany({
+      where: {
+        /* Add filters like availability or location if needed */
+      },
+    });
+
+    if (cleaners.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No cleaners available",
+        message:
+          "No cleaners are currently available to assign to this booking",
+        code: "NO_CLEANERS_AVAILABLE",
+      });
+    }
+
+    const selectedCleaner =
+      cleaners[Math.floor(Math.random() * cleaners.length)];
+
     const booking = await prisma.booking.create({
       data: {
         user: { connect: { id: userId } },
         service: { connect: { id: serviceId } },
+        cleaner: { connect: { id: selectedCleaner.id } },
         date: bookingDate,
         time,
         location,
@@ -141,18 +181,16 @@ const createBooking = async (req, res) => {
             phone: true,
           },
         },
+        cleaner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
       },
     });
-
-    // TODO: Implement notification to cleaner (e.g., via WebSocket or push notification)
-    // Placeholder: Assign a cleaner (simplified logic, replace with your assignment logic)
-    const cleaners = await prisma.cleaner.findMany();
-    if (cleaners.length > 0) {
-      await prisma.booking.update({
-        where: { id: booking.id },
-        data: { cleaner: { connect: { id: cleaners[0].id } } },
-      });
-    }
 
     return res.status(201).json({
       success: true,
@@ -177,6 +215,7 @@ const createBooking = async (req, res) => {
   }
 };
 
+// ... other controller functions remain unchanged
 const verifyPayment = async (req, res) => {
   const { pidx } = req.body;
 
@@ -328,7 +367,6 @@ const updateBookingStatus = async (req, res) => {
       },
     });
 
-    // TODO: Notify cleaner of status change
     res.status(200).json(updatedBooking);
   } catch (error) {
     console.error("Error updating booking status:", error);
@@ -448,7 +486,6 @@ const updateCleanerBookingStatus = async (req, res) => {
       },
     });
 
-    // TODO: Notify user of status change
     res.status(200).json(updatedBooking);
   } catch (error) {
     console.error("Error updating booking status:", error);
