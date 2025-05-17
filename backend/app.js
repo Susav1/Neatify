@@ -18,7 +18,11 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: ["http://localhost:8081", "http://localhost:5173"],
+    origin: [
+      "http://localhost:8081",
+      "http://localhost:5173",
+      "http://10.0.2.2:8081",
+    ],
     credentials: true,
   })
 );
@@ -30,10 +34,9 @@ app.use("/services", serviceRouter);
 app.use("/cleaners", cleanerRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/category", categoryRoute);
-// app.use("/profile", profileRouter);
 app.use(
   "/uploads/icons",
-  express.static(path.join(__dirname, "uploads/icons"))
+  express.static(path.join(__dirname, "Uploads/icons"))
 );
 
 const port = 5000;
