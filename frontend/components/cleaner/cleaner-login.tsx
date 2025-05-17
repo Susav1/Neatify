@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { TextInput, Button, Text, IconButton } from 'react-native-paper';
-import { Link, router } from 'expo-router'; // Changed from useRouter to router
+import { Link, router } from 'expo-router';
 import { useAuth } from '@/context/auth-context';
 import { CleanerLoginFormData } from '@/types/form';
-import { cleanerLogin } from '@/services/auth.service';
 
 const CleanerLoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Added loading state
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     control,
@@ -28,15 +27,18 @@ const CleanerLoginForm = () => {
   const onSubmit = async (data: CleanerLoginFormData) => {
     setIsLoading(true);
     try {
-      const response = await cleanerLogin(data);
-      onLogin(response);
-      router.replace('/cleaner/Home'); // Using router directly
+      console.log('[cleaner-login] Submitting login with data:', data);
+      const response = await onLogin(data, true);
+      console.log('[cleaner-login] Login response:', response);
+      if ('error' in response && response.error) {
+        console.error('[cleaner-login] Login failed:', response.msg);
+      } else {
+        reset();
+      }
     } catch (error) {
-      console.error('Login error:', error);
-      // You might want to show an error message to the user here
+      console.error('[cleaner-login] Unexpected error:', error);
     } finally {
       setIsLoading(false);
-      reset();
     }
   };
 
@@ -70,6 +72,7 @@ const CleanerLoginForm = () => {
             keyboardType="email-address"
             mode="outlined"
             style={styles.input}
+            error={!!errors.email}
           />
         )}
         name="email"
@@ -91,6 +94,7 @@ const CleanerLoginForm = () => {
               secureTextEntry={!showPassword}
               mode="outlined"
               style={styles.input}
+              error={!!errors.password}
             />
             <IconButton
               icon={showPassword ? 'eye-off' : 'eye'}

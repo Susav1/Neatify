@@ -15,30 +15,12 @@ export type LoginFormData = {
 };
 
 export type RegisterFormData = {
-  name: string; // Added this required field
+  name: string;
   email: string;
   password: string;
   confirmPassword: string;
   role: 'User';
 };
-
-export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface ErrorResponse {
-  error: true;
-  msg: string;
-}
-
-export type ForgotPasswordFormData = {
-  email: string;
-};
-
-export interface ForgotPasswordResponse {
-  password: string;
-}
 
 export type CleanerLoginFormData = {
   email: string;
@@ -54,18 +36,38 @@ export type CleanerRegisterFormData = {
   phone: string;
 };
 
-interface User {
+export interface LoginResponse {
+  token: string;
+  refreshToken?: string;
+}
+
+export interface ErrorResponse {
+  error: true;
+  msg: string;
+}
+
+export type ForgotPasswordFormData = {
+  email: string;
+};
+
+export interface ForgotPasswordResponse {
+  password: string;
+}
+
+export interface User {
   id: string;
   name: string;
   email: string;
   profilePicture?: string;
 }
 
-interface AuthProps {
-  token: string | null;
-  authenticated: boolean | null;
-  user: User | null;
-  onLogin: (token: string, user: User) => void;
+export interface AuthProps {
+  authState: {
+    token: string | null;
+    authenticated: boolean | null;
+    user: User | null;
+  };
+  onLogin: (data: LoginFormData, isCleaner?: boolean) => Promise<LoginResponse | ErrorResponse>;
   onLogout: () => void;
   updateUser: (userData: Partial<User>) => void;
 }

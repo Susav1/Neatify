@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { TextInput, Button, Text, IconButton } from 'react-native-paper';
 import { Link, router } from 'expo-router';
 
-import type { LoginFormData } from '../types/form';
+import type { LoginFormData, ErrorResponse } from '../types/form';
 import { useAuth } from '@/context/auth-context';
 
 const LoginForm = () => {
@@ -22,19 +22,28 @@ const LoginForm = () => {
 
   const { onLogin } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const onSubmit = (data: LoginFormData) => {
-    onLogin({
-      email: data.email,
-      password: data.password,
-    });
-
-    reset();
+  const onSubmit = async (data: LoginFormData) => {
+    setIsLoading(true);
+    try {
+      console.log('[login-form] Submitting login with data:', data);
+      const response = await onLogin(data);
+      console.log('[login-form] Login response:', response);
+      if ('error' in response && response.error) {
+        console.error('[login-form] Login failed:', response.msg);
+      } else {
+        reset();
+      }
+    } catch (error) {
+      console.error('[login-form] Unexpected error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Back Button */}
       <IconButton
         icon="arrow-left"
         size={24}
@@ -70,6 +79,7 @@ const LoginForm = () => {
             keyboardType="email-address"
             mode="outlined"
             style={styles.input}
+            error={!!errors.email}
           />
         )}
         name="email"
@@ -91,6 +101,7 @@ const LoginForm = () => {
               secureTextEntry={!showPassword}
               mode="outlined"
               style={styles.input}
+              error={!!errors.password}
             />
             <IconButton
               icon={showPassword ? 'eye-off' : 'eye'}
@@ -112,8 +123,10 @@ const LoginForm = () => {
         mode="contained"
         onPress={handleSubmit(onSubmit)}
         style={styles.loginButton}
-        labelStyle={styles.loginButtonText}>
-        Login
+        labelStyle={styles.loginButtonText}
+        loading={isLoading}
+        disabled={isLoading}>
+        {isLoading ? 'Logging in...' : 'Login'}
       </Button>
 
       <Text style={styles.orText}>or</Text>

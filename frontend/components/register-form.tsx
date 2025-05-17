@@ -16,7 +16,7 @@ const RegisterForm = () => {
     reset,
   } = useForm<RegisterFormData>({
     defaultValues: {
-      name: '', // Added name field
+      name: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -25,18 +25,17 @@ const RegisterForm = () => {
   });
 
   const router = useRouter();
-  const { mutateAsync } = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationKey: ['register-user'],
     mutationFn: signUp,
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added loading state
 
   const onSubmit = async (data: RegisterFormData) => {
-    setIsSubmitting(true);
     try {
+      console.log('[register-form] Submitting registration with data:', data);
       await mutateAsync(
         {
           name: data.name,
@@ -45,23 +44,28 @@ const RegisterForm = () => {
           role: 'User',
         },
         {
-          onSuccess: () => {
-            Alert.alert('Registration Successful!');
+          onSuccess: (response) => {
+            console.log('[register-form] Registration successful:', response);
+            Alert.alert('Registration Successful', 'Please log in to continue.');
             router.push('/(auth)/sign-in');
+            reset();
           },
           onError: (error: any) => {
-            console.log('Registration error:', error.response?.data);
-            const errorMessage =
-              error.response?.data?.errors?.[0]?.message ||
+            console.error(
+              '[register-form] Registration error:',
+              error.response?.data || error.message
+            );
+            Alert.alert(
+              'Registration Failed',
               error.response?.data?.message ||
-              'Error while registering, please try later!';
-            Alert.alert('Registration Failed', errorMessage);
+                error.response?.data?.errors?.[0]?.message ||
+                'Error while registering, please try later!'
+            );
           },
         }
       );
-    } finally {
-      setIsSubmitting(false);
-      reset();
+    } catch (error) {
+      console.error('[register-form] Unexpected error:', error);
     }
   };
 
@@ -76,7 +80,6 @@ const RegisterForm = () => {
         Signup
       </Text>
 
-      {/* Name Input */}
       <Controller
         control={control}
         rules={{
@@ -94,13 +97,13 @@ const RegisterForm = () => {
             value={value}
             mode="outlined"
             style={styles.input}
+            error={!!errors.name}
           />
         )}
         name="name"
       />
       {errors.name && <Text style={styles.errorText}>{errors.name.message}</Text>}
 
-      {/* Email Input */}
       <Controller
         control={control}
         rules={{
@@ -120,13 +123,13 @@ const RegisterForm = () => {
             keyboardType="email-address"
             mode="outlined"
             style={styles.input}
+            error={!!errors.email}
           />
         )}
         name="email"
       />
       {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
 
-      {/* Password Input */}
       <Controller
         control={control}
         rules={{
@@ -146,6 +149,7 @@ const RegisterForm = () => {
               secureTextEntry={!showPassword}
               mode="outlined"
               style={styles.input}
+              error={!!errors.password}
             />
             <IconButton
               icon={showPassword ? 'eye-off' : 'eye'}
@@ -159,7 +163,6 @@ const RegisterForm = () => {
       />
       {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
 
-      {/* Confirm Password Input */}
       <Controller
         control={control}
         rules={{
@@ -176,6 +179,7 @@ const RegisterForm = () => {
               secureTextEntry={!showConfirmPassword}
               mode="outlined"
               style={styles.input}
+              error={!!errors.confirmPassword}
             />
             <IconButton
               icon={showConfirmPassword ? 'eye-off' : 'eye'}
@@ -196,9 +200,9 @@ const RegisterForm = () => {
         onPress={handleSubmit(onSubmit)}
         style={styles.registerButton}
         labelStyle={styles.registerButtonText}
-        loading={isSubmitting}
-        disabled={isSubmitting}>
-        {isSubmitting ? 'Signing Up...' : 'Signup'}
+        loading={isPending}
+        disabled={isPending}>
+        {isPending ? 'Signing Up...' : 'Signup'}
       </Button>
 
       <Text style={styles.orText}>or</Text>
@@ -210,7 +214,6 @@ const RegisterForm = () => {
   );
 };
 
-// Keep your existing styles unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,
