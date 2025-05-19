@@ -6,6 +6,7 @@ import History from './History';
 import Notifications from './Notification';
 import Wallet from './Wallet';
 import Settings from './Setting';
+import Messages from './CleanerMessages';
 
 const Tab = createBottomTabNavigator();
 
@@ -14,15 +15,35 @@ const AppLayout = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
+          let iconName:
+            | 'home'
+            | 'home-outline'
+            | 'time'
+            | 'time-outline'
+            | 'notifications'
+            | 'notifications-outline'
+            | 'wallet'
+            | 'wallet-outline'
+            | 'settings'
+            | 'settings-outline'
+            | 'chatbubbles'
+            | 'chatbubbles-outline';
 
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'History') iconName = focused ? 'time' : 'time-outline';
-          else if (route.name === 'Notifications')
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'History') {
+            iconName = focused ? 'time' : 'time-outline';
+          } else if (route.name === 'Notifications') {
             iconName = focused ? 'notifications' : 'notifications-outline';
-          else if (route.name === 'Wallet') iconName = focused ? 'wallet' : 'wallet-outline';
-          else if (route.name === 'Settings') iconName = focused ? 'settings' : 'settings-outline';
-          else iconName = 'home'; // default icon
+          } else if (route.name === 'Wallet') {
+            iconName = focused ? 'wallet' : 'wallet-outline';
+          } else if (route.name === 'Settings') {
+            iconName = focused ? 'settings' : 'settings-outline';
+          } else if (route.name === 'Messages') {
+            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          } else {
+            iconName = 'home'; // Fallback icon
+          }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -33,6 +54,7 @@ const AppLayout = () => {
       <Tab.Screen name="Home" component={Home} />
       <Tab.Screen name="History" component={History} />
       <Tab.Screen name="Notifications" component={Notifications} />
+      <Tab.Screen name="Messages" component={Messages} />
       <Tab.Screen name="Wallet" component={Wallet} />
       <Tab.Screen name="Settings" component={Settings} />
     </Tab.Navigator>

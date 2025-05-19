@@ -16,47 +16,52 @@ model Admin {
 }
 
 model User {
-  id            String    @id @default(uuid()) @map("_id")
-  email         String    @unique
+  id            String         @id @default(uuid()) @map("_id")
+  email         String         @unique
   password      String
   name          String
   role          Role
   licenseNumber String?
   phone         String?
-  bookings      Booking[] @relation("UserBookings")
+  bookings      Booking[]      @relation("UserBookings")
   services      Service[]
   reviews       Review[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  conversations Conversation[] @relation("UserConversations")
+  messages      Message[]      @relation("UserMessages")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Cleaner {
-  id        String    @id @default(uuid()) @map("_id")
-  email     String    @unique
-  password  String
-  name      String
-  role      Role
-  phone     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Booking   Booking[]
+  id            String         @id @default(uuid()) @map("_id")
+  email         String         @unique
+  password      String
+  name          String
+  role          Role
+  phone         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  bookings      Booking[]
+  conversations Conversation[] @relation("CleanerConversations")
+  messages      Message[]      @relation("CleanerMessages")
 }
 
 model Service {
-  id          String    @id @default(uuid()) @map("_id")
-  name        String
-  description String?
-  price       Float
-  duration    Int       @default(1)
-  userId      String?
-  user        User?     @relation(fields: [userId], references: [id])
-  bookings    Booking[]
-  reviews     Review[]
-  image       String?
-  category    Category  @relation(fields: [categoryId], references: [id])
-  categoryId  String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String         @id @default(uuid()) @map("_id")
+  name         String
+  description  String?
+  price        Float
+  duration     Int            @default(1)
+  userId       String?
+  user         User?          @relation(fields: [userId], references: [id])
+  bookings     Booking[]
+  reviews      Review[]
+  image        String?
+  category     Category       @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Conversation Conversation[]
 }
 
 model Booking {
@@ -71,13 +76,13 @@ model Booking {
   time          String
   location      String
   paymentMethod PaymentMethod
-  paymentStatus String?       @default("PENDING") // Added for Khalti payment status
+  paymentStatus String?       @default("PENDING")
   status        BookingStatus @default(PENDING)
   notes         String?
   price         Float
   duration      Int
   areas         String[]
-  pidx          String? // Khalti payment ID
+  pidx          String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -103,6 +108,32 @@ model Review {
   @@index([serviceId])
 }
 
+model Conversation {
+  id        String    @id @default(uuid()) @map("_id")
+  userId    String
+  user      User      @relation("UserConversations", fields: [userId], references: [id])
+  cleanerId String?
+  cleaner   Cleaner?  @relation("CleanerConversations", fields: [cleanerId], references: [id])
+  serviceId String?
+  service   Service?  @relation(fields: [serviceId], references: [id])
+  isGroup   Boolean   @default(true)
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Message {
+  id             String       @id @default(uuid()) @map("_id")
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  senderType     SenderType
+  user           User?        @relation("UserMessages", fields: [senderId], references: [id])
+  cleaner        Cleaner?     @relation("CleanerMessages", fields: [senderId], references: [id])
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
 enum Role {
   User
   Admin
@@ -119,4 +150,9 @@ enum BookingStatus {
 enum PaymentMethod {
   CASH
   KHALTI
+}
+
+enum SenderType {
+  User
+  Cleaner
 }

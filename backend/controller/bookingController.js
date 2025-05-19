@@ -59,7 +59,7 @@ const createBooking = async (req, res) => {
         serviceId,
         date: bookingDate,
         time,
-        status: { not: "CANCELLED" }, // Ignore cancelled bookings
+        status: { not: "CANCELLED" },
       },
     });
 
@@ -129,7 +129,7 @@ const createBooking = async (req, res) => {
 
     const cleaners = await prisma.cleaner.findMany({
       where: {
-        /* Add filters like availability or location if needed */
+        // Add filters like availability or location if needed
       },
     });
 
@@ -146,50 +146,55 @@ const createBooking = async (req, res) => {
     const selectedCleaner =
       cleaners[Math.floor(Math.random() * cleaners.length)];
 
-    const booking = await prisma.booking.create({
-      data: {
-        user: { connect: { id: userId } },
-        service: { connect: { id: serviceId } },
-        cleaner: { connect: { id: selectedCleaner.id } },
-        date: bookingDate,
-        time,
-        location,
-        paymentMethod,
-        paymentStatus,
-        duration: Number.parseInt(duration) || service.duration || 1,
-        price:
-          service.price * (Number.parseInt(duration) || service.duration || 1),
-        status: "PENDING",
-        notes,
-        areas,
-        pidx,
-      },
-      include: {
-        service: {
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            user: { select: { id: true, name: true } },
+    // Use a transaction to ensure data consistency
+    const booking = await prisma.$transaction(async (tx) => {
+      const newBooking = await tx.booking.create({
+        data: {
+          user: { connect: { id: userId } },
+          service: { connect: { id: serviceId } },
+          cleaner: { connect: { id: selectedCleaner.id } },
+          date: bookingDate,
+          time,
+          location,
+          paymentMethod,
+          paymentStatus,
+          duration: Number.parseInt(duration) || service.duration || 1,
+          price:
+            service.price *
+            (Number.parseInt(duration) || service.duration || 1),
+          status: "PENDING",
+          notes,
+          areas,
+          pidx,
+        },
+        include: {
+          service: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              user: { select: { id: true, name: true } },
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+          cleaner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
           },
         },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-        cleaner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-      },
+      });
+      return newBooking;
     });
 
     return res.status(201).json({
@@ -215,7 +220,6 @@ const createBooking = async (req, res) => {
   }
 };
 
-// ... other controller functions remain unchanged
 const verifyPayment = async (req, res) => {
   const { pidx } = req.body;
 
@@ -239,6 +243,7 @@ const verifyPayment = async (req, res) => {
         return res.status(404).json({
           success: false,
           message: "Booking not found",
+          code: "BOOKING_NOT_FOUND",
         });
       }
 
@@ -250,12 +255,14 @@ const verifyPayment = async (req, res) => {
       return res.status(200).json({
         success: true,
         message: "Payment verified successfully",
+        code: "PAYMENT_VERIFIED",
       });
     } else {
       return res.status(400).json({
         success: false,
         message: "Payment verification failed",
         details: response.data,
+        code: "PAYMENT_VERIFICATION_FAILED",
       });
     }
   } catch (error) {
@@ -263,6 +270,7 @@ const verifyPayment = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Payment verification failed",
+      code: "PAYMENT_VERIFICATION_ERROR",
     });
   }
 };
@@ -305,8 +313,13 @@ const getUserBookings = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user bookings:", error);
     res.status(500).json({
+      success: false,
       error: "Failed to fetch bookings",
-      details: process.env.NODE_ENV === "development" ? error.message : null,
+      message:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+      code: "FETCH_BOOKINGS_FAILED",
     });
   }
 };
@@ -319,8 +332,10 @@ const updateBookingStatus = async (req, res) => {
 
     if (!["CANCELLED", "COMPLETED"].includes(status)) {
       return res.status(400).json({
+        success: false,
         error: "Invalid status",
         validStatuses: ["CANCELLED", "COMPLETED"],
+        code: "INVALID_STATUS",
       });
     }
 
@@ -329,50 +344,68 @@ const updateBookingStatus = async (req, res) => {
     });
 
     if (!booking) {
-      return res.status(404).json({ error: "Booking not found" });
+      return res.status(404).json({
+        success: false,
+        error: "Booking not found",
+        code: "BOOKING_NOT_FOUND",
+      });
     }
 
     if (booking.userId !== userId) {
-      return res
-        .status(403)
-        .json({ error: "Unauthorized to update this booking" });
+      return res.status(403).json({
+        success: false,
+        error: "Unauthorized to update this booking",
+        code: "UNAUTHORIZED",
+      });
     }
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id: bookingId },
-      data: { status },
-      include: {
-        service: {
-          select: {
-            id: true,
-            name: true,
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      return await tx.booking.update({
+        where: { id: bookingId },
+        data: { status },
+        include: {
+          service: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+          cleaner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
           },
         },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-        cleaner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-      },
+      });
     });
 
-    res.status(200).json(updatedBooking);
+    res.status(200).json({
+      success: true,
+      data: updatedBooking,
+      message: "Booking status updated successfully",
+      code: "BOOKING_STATUS_UPDATED",
+    });
   } catch (error) {
     console.error("Error updating booking status:", error);
     res.status(500).json({
+      success: false,
       error: "Failed to update booking status",
-      details: process.env.NODE_ENV === "development" ? error.message : null,
+      message:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+      code: "UPDATE_BOOKING_STATUS_FAILED",
     });
   }
 };
@@ -416,8 +449,13 @@ const getCleanerBookings = async (req, res) => {
   } catch (error) {
     console.error("Error fetching cleaner bookings:", error);
     res.status(500).json({
+      success: false,
       error: "Failed to fetch bookings",
-      details: process.env.NODE_ENV === "development" ? error.message : null,
+      message:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+      code: "FETCH_CLEANER_BOOKINGS_FAILED",
     });
   }
 };
@@ -430,8 +468,10 @@ const updateCleanerBookingStatus = async (req, res) => {
 
     if (!["CONFIRMED", "CANCELLED", "COMPLETED"].includes(status)) {
       return res.status(400).json({
+        success: false,
         error: "Invalid status",
         validStatuses: ["CONFIRMED", "CANCELLED", "COMPLETED"],
+        code: "INVALID_STATUS",
       });
     }
 
@@ -442,28 +482,6 @@ const updateCleanerBookingStatus = async (req, res) => {
           select: {
             id: true,
             userId: true,
-          },
-        },
-      },
-    });
-
-    if (!booking) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
-
-    if (booking.cleanerId !== cleanerId) {
-      return res
-        .status(403)
-        .json({ error: "Unauthorized to update this booking" });
-    }
-
-    const updatedBooking = await prisma.booking.update({
-      where: { id: bookingId },
-      data: { status },
-      include: {
-        service: {
-          select: {
-            id: true,
             name: true,
           },
         },
@@ -471,27 +489,126 @@ const updateCleanerBookingStatus = async (req, res) => {
           select: {
             id: true,
             name: true,
-            email: true,
-            phone: true,
-          },
-        },
-        cleaner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
           },
         },
       },
     });
 
-    res.status(200).json(updatedBooking);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: "Booking not found",
+        code: "BOOKING_NOT_FOUND",
+      });
+    }
+
+    if (booking.cleanerId !== cleanerId) {
+      return res.status(403).json({
+        success: false,
+        error: "Unauthorized to update this booking",
+        code: "UNAUTHORIZED",
+      });
+    }
+
+    // Validate status transition
+    const validTransitions = {
+      PENDING: ["CONFIRMED", "CANCELLED"],
+      CONFIRMED: ["COMPLETED", "CANCELLED"],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
+
+    if (!validTransitions[booking.status].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid status transition",
+        message: `Cannot change status from ${booking.status} to ${status}`,
+        code: "INVALID_STATUS_TRANSITION",
+      });
+    }
+
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      const updated = await tx.booking.update({
+        where: { id: bookingId },
+        data: { status },
+        include: {
+          service: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+          cleaner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+        },
+      });
+
+      if (status === "CONFIRMED") {
+        // Create or find a conversation
+        let conversation = await tx.conversation.findFirst({
+          where: {
+            userId: booking.userId,
+            cleanerId,
+            serviceId: booking.serviceId,
+            isGroup: false,
+          },
+        });
+
+        if (!conversation) {
+          conversation = await tx.conversation.create({
+            data: {
+              userId: booking.userId,
+              cleanerId,
+              serviceId: booking.serviceId,
+              isGroup: false,
+            },
+          });
+        }
+
+        // Send automatic message
+        await tx.message.create({
+          data: {
+            conversationId: conversation.id,
+            senderId: cleanerId,
+            senderType: "Cleaner",
+            content: `Hello ${booking.user.name}, I am your cleaner for the ${booking.service.name} service. Looking forward to assisting you!`,
+          },
+        });
+      }
+
+      return updated;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updatedBooking,
+      message: "Cleaner booking status updated successfully",
+      code: "CLEANER_BOOKING_STATUS_UPDATED",
+    });
   } catch (error) {
-    console.error("Error updating booking status:", error);
+    console.error("Error updating cleaner booking status:", error);
     res.status(500).json({
-      error: "Failed to update booking status",
-      details: process.env.NODE_ENV === "development" ? error.message : null,
+      success: false,
+      error: "Failed to update cleaner booking status",
+      message:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Internal server error",
+      code: "UPDATE_CLEANER_BOOKING_STATUS_FAILED",
     });
   }
 };
