@@ -10,20 +10,20 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
-
 import Bookings from './bookings';
 import Messages from './messages';
 import Profile from './Profile';
 import SettingsScreen from './settings';
 import HomeCleaningDetails from './HomeCleaningDetails';
 import CategoryHome from './categoryHome';
+import Chat from './chat';
 
 const HomePage = () => {
   const [currentPage, setCurrentPage] = useState('Home');
   const [searchQuery, setSearchQuery] = useState('');
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedServiceId, setSelectedServiceId] = useState(null); // Store service ID
+  const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,8 +42,8 @@ const HomePage = () => {
   }, []);
 
   const handleServicePress = (service) => {
-    setSelectedServiceId(service.id); // Store the service ID
-    setCurrentPage('HomeCleaningDetails'); // Navigate to details page
+    setSelectedServiceId(service.id);
+    setCurrentPage('HomeCleaningDetails');
   };
 
   const renderPage = () => {
@@ -57,7 +57,6 @@ const HomePage = () => {
                 {/* <Image style={styles.profileImage} /> */}
               </TouchableOpacity>
             </View>
-
             <View style={styles.searchContainer}>
               <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
               <TextInput
@@ -68,7 +67,6 @@ const HomePage = () => {
                 onChangeText={setSearchQuery}
               />
             </View>
-
             {loading ? (
               <ActivityIndicator size="large" color="#27AE60" />
             ) : (
@@ -84,7 +82,8 @@ const HomePage = () => {
                   showsHorizontalScrollIndicator={false}
                   style={styles.taskContainer}>
                   {categories
-                    .flatMap((cat) => cat?.services)
+                    .filter((cat) => cat && Array.isArray(cat.services))
+                    .flatMap((cat) => cat.services || [])
                     .map((service, index) => (
                       <TouchableOpacity
                         key={index}
@@ -100,7 +99,6 @@ const HomePage = () => {
                       </TouchableOpacity>
                     ))}
                 </ScrollView>
-
                 <Text style={styles.sectionTitle}>Categories</Text>
                 <View style={styles.categoryGrid}>
                   {categories.map((cat) => (
@@ -125,10 +123,10 @@ const HomePage = () => {
             )}
           </ScrollView>
         );
-      case 'bookings':
+      case 'Bookings':
         return <Bookings />;
       case 'Messages':
-        return <Messages />;
+        return <Messages setCurrentPage={setCurrentPage} />;
       case 'Settings':
         return <SettingsScreen />;
       case 'HomeCleaningDetails':
@@ -137,6 +135,8 @@ const HomePage = () => {
         );
       case 'CategoryHome':
         return <CategoryHome setCurrentPage={setCurrentPage} category={selectedCategory} />;
+      case 'Chat':
+        return <Chat setCurrentPage={setCurrentPage} serviceId={selectedServiceId} />;
       default:
         return null;
     }
@@ -154,13 +154,13 @@ const HomePage = () => {
           />
           <Text style={[styles.navText, currentPage === 'Home' && styles.activeNavText]}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setCurrentPage('bookings')} style={styles.navItem}>
+        <TouchableOpacity onPress={() => setCurrentPage('Bookings')} style={styles.navItem}>
           <FontAwesome
-            name={currentPage === 'bookings' ? 'calendar-check-o' : 'calendar-o'}
+            name={currentPage === 'Bookings' ? 'calendar-check-o' : 'calendar-o'}
             size={24}
-            color={currentPage === 'bookings' ? '#27AE60' : '#888'}
+            color={currentPage === 'Bookings' ? '#27AE60' : '#888'}
           />
-          <Text style={[styles.navText, currentPage === 'bookings' && styles.activeNavText]}>
+          <Text style={[styles.navText, currentPage === 'Bookings' && styles.activeNavText]}>
             Bookings
           </Text>
         </TouchableOpacity>

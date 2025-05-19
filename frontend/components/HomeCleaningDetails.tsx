@@ -17,7 +17,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { getServiceById } from '../services/service.service';
 import { createBooking } from '../services/booking.service';
 import { useAuth } from '../context/auth-context';
-import BookingOverlay from './BookingOverlay'; // Adjust path as needed
+import BookingOverlay from './BookingOverlay';
 
 interface CleaningServiceViewProps {
   setCurrentPage: (page: string) => void;
@@ -44,11 +44,14 @@ interface Review {
 }
 
 interface BookingData {
+  serviceId: string;
   date: string;
   time: string;
   location: string;
   paymentMethod: 'CASH' | 'KHALTI';
   duration: number;
+  notes: string;
+  areas: string[];
 }
 
 const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPage, serviceId }) => {
@@ -91,7 +94,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
-    // TODO: Implement favorite functionality
   };
 
   const toggleShowAllReviews = () => {
@@ -99,15 +101,24 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
   };
 
   const handleBookNow = () => {
-    console.log('Book Now clicked, authState:', authState);
     if (!authState.authenticated) {
       Alert.alert('Authentication Required', 'Please log in to book a service.', [
         { text: 'OK', onPress: () => setCurrentPage('Login') },
       ]);
       return;
     }
+    console.log('Opening BookingOverlay for serviceId:', serviceId);
     setShowBookingOverlay(true);
-    console.log('BookingOverlay should be visible, showBookingOverlay:', true);
+  };
+
+  const handleMessage = () => {
+    if (!authState.authenticated) {
+      Alert.alert('Authentication Required', 'Please log in to send a message.', [
+        { text: 'OK', onPress: () => setCurrentPage('Login') },
+      ]);
+      return;
+    }
+    setCurrentPage('Chat');
   };
 
   const handleBookingSubmit = async (bookingData: BookingData) => {
@@ -115,6 +126,7 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
       if (!service) {
         throw new Error('Service details not available');
       }
+      console.log('Submitting booking with data:', bookingData);
       const payload = {
         serviceId: service.id,
         date: bookingData.date,
@@ -122,12 +134,14 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
         location: bookingData.location,
         paymentMethod: bookingData.paymentMethod,
         duration: bookingData.duration,
+        notes: bookingData.notes,
+        areas: bookingData.areas,
       };
-      console.log('Submitting booking payload:', payload);
       const response = await createBooking(payload);
+      console.log('Booking response:', response);
       Alert.alert('Success', 'Booking created successfully!');
       setShowBookingOverlay(false);
-      console.log('Booking response:', response);
+      setCurrentPage('Bookings');
     } catch (error: any) {
       console.error('Booking error:', error);
       Alert.alert('Booking Failed', error.message || 'Failed to create booking. Please try again.');
@@ -182,7 +196,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Header with back button */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => setCurrentPage('Home')}>
             <Ionicons name="chevron-back" size={24} color="#fff" />
@@ -201,9 +214,7 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
           </View>
         </View>
 
-        {/* Main content */}
         <View style={styles.mainContent}>
-          {/* Service image */}
           <Image
             source={{
               uri: service.image || 'https://shorturl.at/PEb19',
@@ -211,7 +222,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
             style={styles.serviceImage}
           />
 
-          {/* Service title section */}
           <View style={styles.serviceTitleContainer}>
             <Text style={styles.serviceTitle}>{service.name}</Text>
             <View style={styles.ratingContainer}>
@@ -222,7 +232,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
             </View>
           </View>
 
-          {/* Provider info */}
           <View style={styles.providerInfo}>
             <View style={styles.providerBadge}>
               <MaterialIcons name="verified" size={16} color="#27AE60" />
@@ -234,19 +243,16 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
             </View>
           </View>
 
-          {/* Price */}
           <View style={styles.priceContainer}>
             <Text style={styles.priceAmount}>NPR {service.price}</Text>
             <Text style={styles.priceUnit}>(per service)</Text>
           </View>
 
-          {/* About section */}
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>About this service</Text>
             <Text style={styles.sectionContent}>{service.description}</Text>
           </View>
 
-          {/* Service details */}
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Service Details</Text>
             <View style={styles.detailsGrid}>
@@ -277,7 +283,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
             </View>
           </View>
 
-          {/* Photos section */}
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Photos & Videos</Text>
@@ -301,7 +306,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
             </ScrollView>
           </View>
 
-          {/* Reviews section */}
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Reviews</Text>
@@ -378,9 +382,8 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
           </View>
         </View>
 
-        {/* Bottom action buttons */}
         <View style={styles.bottomActions}>
-          <TouchableOpacity style={styles.messageButton}>
+          <TouchableOpacity style={styles.messageButton} onPress={handleMessage}>
             <Ionicons name="chatbubble-outline" size={20} color="#27AE60" />
             <Text style={styles.messageButtonText}>Message</Text>
           </TouchableOpacity>
@@ -392,17 +395,19 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
         </View>
       </ScrollView>
 
-      <BookingOverlay
-        visible={showBookingOverlay}
-        onClose={() => {
-          console.log('Closing BookingOverlay');
-          setShowBookingOverlay(false);
-        }}
-        onSubmit={handleBookingSubmit}
-        servicePrice={service.price}
-        serviceId={service.id}
-        duration={service.duration}
-      />
+      {service && (
+        <BookingOverlay
+          visible={showBookingOverlay}
+          onClose={() => {
+            console.log('Closing BookingOverlay');
+            setShowBookingOverlay(false);
+          }}
+          onSubmit={handleBookingSubmit}
+          servicePrice={service.price}
+          serviceId={service.id}
+          duration={service.duration}
+        />
+      )}
     </SafeAreaView>
   );
 };

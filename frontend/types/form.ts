@@ -36,6 +36,11 @@ export type CleanerRegisterFormData = {
   phone: string;
 };
 
+export type MessageData = {
+  bookingId: string;
+  content: string;
+};
+
 export interface LoginResponse {
   token: string;
   refreshToken?: string;
