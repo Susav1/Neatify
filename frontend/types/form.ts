@@ -20,6 +20,7 @@ export type RegisterFormData = {
   password: string;
   confirmPassword: string;
   role: 'User';
+  phone?: string;
 };
 
 export type CleanerLoginFormData = {
@@ -64,6 +65,7 @@ export interface User {
   name: string;
   email: string;
   profilePicture?: string;
+  phone?: string;
 }
 
 export interface AuthProps {

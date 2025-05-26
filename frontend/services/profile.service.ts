@@ -1,65 +1,45 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
 import api from './api';
+import { API_URL } from '@/constants';
 
-interface ProfileData {
-  fullName: string;
-  email: string;
-  profilePic?: string;
-}
-
-export const useGetProfile = () => {
-  return useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      try {
-        const response = await api.get('/profile');
-        return response.data.user as ProfileData;
-      } catch (error: any) {
-        if (error.response?.status === 401) {
-          throw new Error('Unauthorized access. Please login again.');
-        }
-        throw error;
-      }
-    },
-  });
+export const updateProfile = async (data: { name?: string; phone?: string }) => {
+  try {
+    console.log('[profile.service] Updating profile with data:', data);
+    const response = await api.put('/profile/me', data);
+    console.log('[profile.service] Update profile response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('[profile.service] Update profile error:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
-interface UpdateProfileData {
-  fullName: string;
-  profilePic?: string | null;
-}
+export const uploadProfilePicture = async (formData: FormData) => {
+  try {
+    console.log('[profile.service] Uploading profile picture');
+    const response = await api.post('/profile/upload-profile-picture', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    console.log('[profile.service] Upload profile picture response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      '[profile.service] Upload profile picture error:',
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
 
-export const useUpdateProfile = () => {
-  return useMutation({
-    mutationFn: async (data: UpdateProfileData) => {
-      try {
-        let formData = new FormData();
-        formData.append('fullName', data.fullName);
-        
-        if (data.profilePic) {
-          const filename = data.profilePic.split('/').pop();
-          const match = /\.(\w+)$/.exec(filename || '');
-          const type = match ? `image/${match[1]}` : 'image';
-          
-          formData.append('profilePic', {
-            uri: data.profilePic,
-            name: filename,
-            type,
-          } as any);
-        }
-
-        const response = await api.put('/profile', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        return response.data.user;
-      } catch (error: any) {
-        if (error.response?.status === 401) {
-          throw new Error('Unauthorized access. Please login again.');
-        }
-        throw error;
-      }
-    },
-  });
+export const getProfile = async () => {
+  try {
+    console.log('[profile.service] Fetching profile');
+    const response = await api.get('/profile/me');
+    console.log('[profile.service] Profile response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('[profile.service] Profile error:', error.response?.data || error.message);
+    throw error;
+  }
 };
