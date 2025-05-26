@@ -16,34 +16,36 @@ model Admin {
 }
 
 model User {
-  id            String         @id @default(uuid()) @map("_id")
-  email         String         @unique
-  password      String
-  name          String
-  role          Role
-  licenseNumber String?
-  phone         String?
-  bookings      Booking[]      @relation("UserBookings")
-  services      Service[]
-  reviews       Review[]
-  conversations Conversation[] @relation("UserConversations")
-  messages      Message[]      @relation("UserMessages")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id             String         @id @default(uuid()) @map("_id")
+  email          String         @unique
+  password       String
+  name           String
+  role           Role
+  licenseNumber  String?
+  phone          String?
+  profilePicture String?
+  bookings       Booking[]      @relation("UserBookings")
+  services       Service[]
+  reviews        Review[]
+  conversations  Conversation[] @relation("UserConversations")
+  messages       Message[]      @relation("UserMessages")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 model Cleaner {
-  id            String         @id @default(uuid()) @map("_id")
-  email         String         @unique
-  password      String
-  name          String
-  role          Role
-  phone         String?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  bookings      Booking[]
-  conversations Conversation[] @relation("CleanerConversations")
-  messages      Message[]      @relation("CleanerMessages")
+  id             String         @id @default(uuid()) @map("_id")
+  email          String         @unique
+  password       String
+  name           String
+  role           Role
+  phone          String?
+  profilePicture String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  bookings       Booking[]
+  conversations  Conversation[] @relation("CleanerConversations")
+  messages       Message[]      @relation("CleanerMessages")
 }
 
 model Service {
