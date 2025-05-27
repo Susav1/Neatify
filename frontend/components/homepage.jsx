@@ -128,7 +128,9 @@ const HomePage = () => {
       case 'Messages':
         return <Messages setCurrentPage={setCurrentPage} />;
       case 'Settings':
-        return <SettingsScreen />;
+        return <SettingsScreen setCurrentPage={setCurrentPage} />;
+      case 'Profile':
+        return <Profile />;
       case 'HomeCleaningDetails':
         return (
           <HomeCleaningDetails setCurrentPage={setCurrentPage} serviceId={selectedServiceId} />

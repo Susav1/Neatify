@@ -3,7 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { TextInput, Button, Text, IconButton } from 'react-native-paper';
 import { Link, router } from 'expo-router';
-
 import type { LoginFormData, ErrorResponse } from '../types/form';
 import { useAuth } from '@/context/auth-context';
 

@@ -10,11 +10,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { getUserBookings, updateBookingStatus } from '../services/booking.service';
+import { submitReview } from '../services/review.service'; // Import review service
 import { useAuth } from '../context/auth-context';
+import Khalti from './khalti/Khalti';
+import ReviewOverlay from './ReviewOverlay'; // Import ReviewOverlay
 
-interface Booking {
+export interface Booking {
   id: string;
-  service: { name: string };
+  service: { name: string; id: string; price: number };
   date: string;
   time: string;
   location: string;
@@ -26,9 +29,13 @@ const Bookings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'Past' | 'Active' | 'Cancelled'>('Active');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [confirmModal, setConfirmModal] = useState(false);
+  const [detailsModal, setDetailsModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showKhaltiPayment, setShowKhaltiPayment] = useState(false);
+  const [showReviewOverlay, setShowReviewOverlay] = useState(false); // New state for review overlay
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -55,9 +62,43 @@ const Bookings: React.FC = () => {
     return false;
   });
 
+  const handleBookingPress = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setDetailsModal(true);
+    setShowKhaltiPayment(false);
+  };
+
   const handleCancelPress = (bookingId: string) => {
     setBookingToCancel(bookingId);
     setConfirmModal(true);
+  };
+
+  const handlePayWithKhalti = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setShowKhaltiPayment(true);
+  };
+
+  const handleRateReview = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setShowReviewOverlay(true);
+  };
+
+  const handleReviewSubmit = async (reviewData: { rating: number; comment?: string }) => {
+    if (!selectedBooking || !authState.user) {
+      throw new Error('No booking or user selected');
+    }
+
+    try {
+      await submitReview({
+        serviceId: selectedBooking.service.id,
+        bookingId: selectedBooking.id,
+        rating: reviewData.rating,
+        comment: reviewData.comment,
+      });
+      Alert.alert('Success', 'Review submitted successfully!');
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to submit review');
+    }
   };
 
   const confirmCancellation = async () => {
@@ -84,30 +125,74 @@ const Bookings: React.FC = () => {
     setBookingToCancel(null);
   };
 
-  const BookingCard = ({ booking }: { booking: Booking }) => (
-    <View style={styles.bookingCard}>
-      <Text style={styles.bookingName}>{booking.service.name}</Text>
-      <View style={styles.bookingDetails}>
-        <Text style={styles.bookingText}>Date: {new Date(booking.date).toLocaleDateString()}</Text>
-        <Text style={styles.bookingText}>Time: {booking.time}</Text>
-        <Text style={styles.bookingText}>Address: {booking.location}</Text>
-      </View>
-      <Text
-        style={[
-          styles.bookingStatus,
-          booking.status === 'CANCELLED' && styles.cancelledStatus,
-          booking.status === 'PENDING' && styles.pendingStatus,
-          booking.status === 'CONFIRMED' && styles.confirmedStatus,
-        ]}>
-        Status: {booking.status}
-      </Text>
+  const closeDetailsModal = () => {
+    setDetailsModal(false);
+    setSelectedBooking(null);
+    setShowKhaltiPayment(false);
+  };
 
-      {['PENDING', 'CONFIRMED'].includes(booking.status) && (
-        <TouchableOpacity style={styles.cancelButton} onPress={() => handleCancelPress(booking.id)}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+  const handlePaymentSuccess = () => {
+    if (selectedBooking) {
+      setBookings((prev) =>
+        prev.map((b) => (b.id === selectedBooking.id ? { ...b, status: 'CONFIRMED' } : b))
+      );
+    }
+    setShowKhaltiPayment(false);
+    setDetailsModal(false);
+    Alert.alert('Success', 'Payment and booking confirmed successfully!');
+  };
+
+  const handlePaymentError = (error: string) => {
+    Alert.alert('Payment Error', error);
+    setShowKhaltiPayment(false);
+  };
+
+  const BookingCard = ({ booking }: { booking: Booking }) => (
+    <TouchableOpacity
+      onPress={() => handleBookingPress(booking)}
+      style={styles.bookingCard}
+      activeOpacity={0.8}>
+      <View style={styles.bookingContent}>
+        <Text style={styles.bookingName}>{booking.service.name}</Text>
+        <View style={styles.bookingDetails}>
+          <Text style={styles.bookingText}>
+            Date: {new Date(booking.date).toLocaleDateString()}
+          </Text>
+          <Text style={styles.bookingText}>Time: {booking.time}</Text>
+          <Text style={styles.bookingText}>Address: {booking.location}</Text>
+        </View>
+        <Text
+          style={[
+            styles.bookingStatus,
+            booking.status === 'CANCELLED' && styles.cancelledStatus,
+            booking.status === 'PENDING' && styles.pendingStatus,
+            booking.status === 'CONFIRMED' && styles.confirmedStatus,
+          ]}>
+          Status: {booking.status}
+        </Text>
+
+        {['PENDING', 'CONFIRMED'].includes(booking.status) && (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleCancelPress(booking.id);
+            }}>
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        )}
+        {booking.status === 'COMPLETED' && (
+          <TouchableOpacity
+            style={styles.reviewButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleRateReview(booking);
+            }}>
+            <Text style={styles.reviewButtonText}>Rate & Review</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 
   if (loading) {
@@ -160,6 +245,119 @@ const Bookings: React.FC = () => {
         )}
       </ScrollView>
 
+      {/* Booking Details Modal */}
+      <Modal visible={detailsModal} transparent={true} animationType="slide">
+        <View style={styles.detailsModalOverlay}>
+          <View style={styles.detailsModalContainer}>
+            <View style={styles.detailsModalHeader}>
+              <Text style={styles.detailsModalTitle}>Booking Details</Text>
+              <TouchableOpacity onPress={closeDetailsModal} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {selectedBooking && (
+              <ScrollView style={styles.detailsContent}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.label}>Service:</Text>
+                  <Text style={styles.value}>{selectedBooking.service.name}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.label}>Date:</Text>
+                  <Text style={styles.value}>
+                    {new Date(selectedBooking.date).toLocaleDateString()}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.label}>Time:</Text>
+                  <Text style={styles.value}>{selectedBooking.time}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.label}>Location:</Text>
+                  <Text style={styles.value}>{selectedBooking.location}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.label}>Status:</Text>
+                  <Text
+                    style={[
+                      styles.value,
+                      selectedBooking.status === 'CANCELLED' && styles.cancelledStatus,
+                      selectedBooking.status === 'PENDING' && styles.pendingStatus,
+                      selectedBooking.status === 'CONFIRMED' && styles.confirmedStatus,
+                    ]}>
+                    {selectedBooking.status}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.label}>Amount:</Text>
+                  <Text style={styles.value}>Rs. {selectedBooking.service.price}</Text>
+                </View>
+
+                {selectedBooking.status === 'PENDING' && !showKhaltiPayment && (
+                  <View style={styles.paymentButtonsContainer}>
+                    <TouchableOpacity
+                      style={[styles.modalActionButton, styles.khaltiButton]}
+                      onPress={() => handlePayWithKhalti(selectedBooking)}>
+                      <Text style={styles.modalActionButtonText}>Pay with Khalti</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalActionButton, styles.cancelButton1]}
+                      onPress={() => handleCancelPress(selectedBooking.id)}>
+                      <Text style={styles.modalActionButtonText}>Cancel Booking</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {selectedBooking.status === 'PENDING' && showKhaltiPayment && (
+                  <Khalti
+                    payment={selectedBooking.service.price}
+                    serviceId={selectedBooking.service.id}
+                    bookingData={{
+                      serviceId: selectedBooking.service.id,
+                      date: selectedBooking.date,
+                      time: selectedBooking.time,
+                      location: selectedBooking.location,
+                    }}
+                  />
+                )}
+
+                {selectedBooking.status === 'CONFIRMED' && (
+                  <TouchableOpacity
+                    style={[styles.modalActionButton, styles.cancelButton]}
+                    onPress={() => handleCancelPress(selectedBooking.id)}>
+                    <Text style={styles.modalActionButtonText}>Cancel Booking</Text>
+                  </TouchableOpacity>
+                )}
+
+                {selectedBooking.status === 'COMPLETED' && (
+                  <TouchableOpacity
+                    style={[styles.modalActionButton, styles.reviewButton]}
+                    onPress={() => {
+                      closeDetailsModal();
+                      handleRateReview(selectedBooking);
+                    }}>
+                    <Text style={styles.modalActionButtonText}>Rate & Review</Text>
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Review Overlay */}
+      {selectedBooking && (
+        <ReviewOverlay
+          visible={showReviewOverlay}
+          onClose={() => setShowReviewOverlay(false)}
+          onSubmit={handleReviewSubmit}
+          serviceId={selectedBooking.service.id}
+          bookingId={selectedBooking.id}
+          serviceName={selectedBooking.service.name}
+        />
+      )}
+
+      {/* Cancellation Confirmation Modal */}
       <Modal visible={confirmModal} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -220,7 +418,6 @@ const styles = StyleSheet.create({
   },
   bookingCard: {
     backgroundColor: 'white',
-    padding: 16,
     borderRadius: 12,
     marginBottom: 12,
     shadowColor: '#000',
@@ -228,6 +425,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
+    overflow: 'hidden',
+  },
+  bookingContent: {
+    padding: 16,
   },
   bookingName: {
     fontSize: 18,
@@ -251,12 +452,15 @@ const styles = StyleSheet.create({
   },
   pendingStatus: {
     color: '#FFA500',
+    fontWeight: '600',
   },
   confirmedStatus: {
     color: '#1E90FF',
+    fontWeight: '600',
   },
   cancelledStatus: {
     color: '#FF4500',
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
@@ -280,6 +484,103 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
     fontSize: 14,
+  },
+  reviewButton: {
+    backgroundColor: '#27AE60',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  reviewButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  detailsModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  detailsModalContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingTop: 20,
+  },
+  detailsModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  detailsModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#2E8B57',
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: '#666',
+    fontWeight: 'bold',
+  },
+  detailsContent: {
+    padding: 20,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#555',
+    flex: 1,
+  },
+  value: {
+    fontSize: 16,
+    color: '#333',
+    flex: 2,
+    textAlign: 'right',
+  },
+  paymentButtonsContainer: {
+    marginTop: 20,
+    flexDirection: 'column',
+    gap: 10,
+  },
+  modalActionButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  khaltiButton: {
+    backgroundColor: '#5C2D91',
+  },
+  cancelButton1: {
+    backgroundColor: '#FF4500',
+  },
+  reviewButton1: {
+    backgroundColor: '#27AE60',
+  },
+  modalActionButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
   },
   modalOverlay: {
     flex: 1,

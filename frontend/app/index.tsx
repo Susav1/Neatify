@@ -1,28 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/context/auth-context';
+import { Redirect } from 'expo-router';
 
-const Home = () => {
-  const { authState } = useAuth();
-  const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted) return;
-
-    // If the user is not authenticated, redirect them to the welcome page
-    if (!authState.authenticated) {
-      router.push('/(auth)/welcome');
-    } else {
-      router.push('/(home)/service');
-    }
-  }, [authState.authenticated, isMounted, router]);
-
-  return null;
-};
-
-export default Home;
+export default function Index() {
+  return <Redirect href="/(auth)/welcome" />;
+}

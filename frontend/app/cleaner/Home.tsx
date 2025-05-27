@@ -52,15 +52,29 @@ const Home: React.FC = () => {
       fetchBookings();
     }
   }, [authState]);
+  const handleBookingAction = async (
+    bookingId: string,
+    status: 'CONFIRMED' | 'CANCELLED',
+    currentStatus: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
+  ) => {
+    const validTransitions: Record<string, string[]> = {
+      PENDING: ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED: ['COMPLETED', 'CANCELLED'],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
 
-  const handleBookingAction = async (bookingId: string, status: 'CONFIRMED' | 'CANCELLED') => {
+    if (!validTransitions[currentStatus]?.includes(status)) {
+      Alert.alert('Invalid Status Transition', `Cannot move from ${currentStatus} to ${status}`);
+      return;
+    }
+
     try {
       await updateCleanerBookingStatus(bookingId, status);
-      // Refresh bookings after status update
-      await fetchBookings();
-      Alert.alert('Success', `Booking ${status.toLowerCase()} successfully!`);
+      // await fetchBookings(); // Refresh list
+      Alert.alert('Success', `Booking ${status.toLowerCase()} successfully.`);
     } catch (error: any) {
-      console.error('Error updating booking status:', error);
+      console.error('Error updating booking status:', error.response?.data || error.message);
       Alert.alert('Error', error.message || 'Failed to update booking status.');
     }
   };
@@ -170,12 +184,12 @@ const Home: React.FC = () => {
             <View style={tw`flex-row justify-between mt-4`}>
               <TouchableOpacity
                 style={tw`border border-red-500 px-6 py-2 rounded-full flex-1 mr-2`}
-                onPress={() => handleBookingAction(booking.id, 'CANCELLED')}>
+                onPress={() => handleBookingAction(booking.id, 'CANCELLED', booking.status)}>
                 <Text style={tw`text-red-500 text-center font-semibold`}>Decline</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={tw`bg-[#27AE60] px-6 py-2 rounded-full flex-1 ml-2`}
-                onPress={() => handleBookingAction(booking.id, 'CONFIRMED')}>
+                onPress={() => handleBookingAction(booking.id, 'CONFIRMED', booking.status)}>
                 <Text style={tw`text-white text-center font-semibold`}>Accept</Text>
               </TouchableOpacity>
             </View>

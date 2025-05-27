@@ -2,44 +2,27 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const CategoryHome = ({ setCurrentPage }) => {
-  const services = [
-    {
-      name: 'Window Cleaning',
-      description: 'Professional window cleaning for sparkling results',
-      price: '$40',
-      rating: 4.7,
-      image: 'https://shorturl.at/example1', // replace with actual image URL
-    },
-    {
-      name: 'Sofa Cleaning',
-      description: 'Deep cleaning for all types of sofas',
-      price: '$60',
-      rating: 4.8,
-      image: 'https://shorturl.at/example2', // replace with actual image URL
-    },
-    {
-      name: 'Kitchen Cleaning',
-      description: 'Complete kitchen deep cleaning service',
-      price: '$75',
-      rating: 4.9,
-      image: 'https://shorturl.at/example3', // replace with actual image URL
-    },
-    {
-      name: 'Bathroom Cleaning',
-      description: 'Sanitization and deep cleaning of bathrooms',
-      price: '$55',
-      rating: 4.6,
-      image: 'https://shorturl.at/example4', // replace with actual image URL
-    },
-    {
-      name: 'Bedroom Cleaning',
-      description: 'Complete bedroom cleaning and organization',
-      price: '$50',
-      rating: 4.5,
-      image: 'https://shorturl.at/example5', // replace with actual image URL
-    },
-  ];
+interface Service {
+  name: string;
+  description: string;
+  price: number;
+  image?: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+  services: Service[];
+}
+
+interface Props {
+  setCurrentPage: (page: string) => void;
+  category: Category;
+}
+
+const CategoryHome: React.FC<Props> = ({ setCurrentPage, category }) => {
+  const services = category?.services || [];
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -47,32 +30,37 @@ const CategoryHome = ({ setCurrentPage }) => {
         <TouchableOpacity onPress={() => setCurrentPage('Home')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#27AE60" />
         </TouchableOpacity>
-        <Text style={styles.title}>House Cleaning Services</Text>
+        <Text style={styles.title}>{category?.name} Services</Text>
       </View>
 
-      {services.map((service, index) => (
-        <TouchableOpacity
-          key={index}
-          style={styles.serviceCard}
-          onPress={() => {
-            // You can navigate to specific service details if needed
-            // For now, we'll just go to HomeCleaningDetails
-            setCurrentPage('HomeCleaningDetails');
-          }}>
-          <Image source={{ uri: service.image }} style={styles.serviceImage} />
-          <View style={styles.serviceInfo}>
-            <Text style={styles.serviceName}>{service.name}</Text>
-            <Text style={styles.serviceDescription}>{service.description}</Text>
-            <View style={styles.serviceFooter}>
-              <Text style={styles.servicePrice}>{service.price}</Text>
-              <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color="#FFD700" />
-                <Text style={styles.ratingText}>{service.rating}</Text>
+      {services.length === 0 ? (
+        <Text style={{ textAlign: 'center', marginTop: 20, color: '#999' }}>
+          No services found in this category.
+        </Text>
+      ) : (
+        services.map((service: Service, index: number) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.serviceCard}
+            onPress={() => setCurrentPage('SericeDetail')}>
+            <Image
+              source={{ uri: service.image || 'https://via.placeholder.com/100' }}
+              style={styles.serviceImage}
+            />
+            <View style={styles.serviceInfo}>
+              <Text style={styles.serviceName}>{service.name}</Text>
+              <Text style={styles.serviceDescription}>{service.description}</Text>
+              <View style={styles.serviceFooter}>
+                <Text style={styles.servicePrice}>${service.price}</Text>
+                <View style={styles.ratingContainer}>
+                  <Ionicons name="star" size={16} color="#FFD700" />
+                  <Text style={styles.ratingText}>4.5</Text>
+                </View>
               </View>
             </View>
-          </View>
-        </TouchableOpacity>
-      ))}
+          </TouchableOpacity>
+        ))
+      )}
     </ScrollView>
   );
 };
