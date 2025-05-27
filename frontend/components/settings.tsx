@@ -240,7 +240,6 @@
 //   },
 // });
 
-// export default SettingsScreen;
 import { logout } from '@/services/auth.service';
 import { useMutation } from '@tanstack/react-query';
 import { router, Href } from 'expo-router';
@@ -268,8 +267,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ setCurrentPage }) => {
         text: 'Logout',
         onPress: async () => {
           try {
-            await mutateAsync();
             onLogout();
+            await mutateAsync();
             router.replace({ pathname: '/(auth)/sign-in' } as Href);
           } catch (error) {
             console.error('Logout failed:', error);

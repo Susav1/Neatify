@@ -18,10 +18,12 @@ import { getServiceById } from '../services/service.service';
 import { createBooking } from '../services/booking.service';
 import { useAuth } from '../context/auth-context';
 import BookingOverlay from './BookingOverlay';
+import EmergencyBookingOverlay from './EmergencyBookingOverlay';
 
 interface CleaningServiceViewProps {
-  setCurrentPage: (page: string) => void;
+  setCurrentPage: (page: string, params?: any) => void;
   serviceId: string;
+  refreshService?: () => void;
 }
 
 interface Service {
@@ -39,7 +41,7 @@ interface Review {
   id: string;
   rating: number;
   comment?: string;
-  user: { name: string };
+  user?: { name: string; profilePic?: string }; // Updated to include profilePic
   createdAt: string;
 }
 
@@ -52,13 +54,19 @@ interface BookingData {
   duration: number;
   notes: string;
   areas: string[];
+  urgencyLevel?: 'same_day' | 'within_2_hours';
 }
 
-const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPage, serviceId }) => {
+const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({
+  setCurrentPage,
+  serviceId,
+  refreshService,
+}) => {
   const { authState } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [showBookingOverlay, setShowBookingOverlay] = useState(false);
+  const [showEmergencyBookingOverlay, setShowEmergencyBookingOverlay] = useState(false);
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,11 +75,13 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
     const fetchService = async () => {
       try {
         setLoading(true);
+        console.log('[HomeCleaningDetails] Fetching service with ID:', serviceId);
         const serviceData = await getServiceById(serviceId);
+        console.log('[HomeCleaningDetails] Service data fetched:', serviceData);
         setService(serviceData);
-      } catch (err) {
+      } catch (err: any) {
+        console.error('[HomeCleaningDetails] Error fetching service:', err);
         setError('Failed to load service details. Please try again.');
-        console.error('Error fetching service:', err);
       } finally {
         setLoading(false);
       }
@@ -79,16 +89,20 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
 
     if (serviceId) {
       fetchService();
+    } else {
+      console.warn('[HomeCleaningDetails] No serviceId provided');
+      setError('Invalid service ID');
+      setLoading(false);
     }
   }, [serviceId]);
 
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Check out ${service?.name} on Neatify!`,
+        message: `Check out ${service?.name || 'this service'} on Neatify!`,
       });
     } catch (error) {
-      console.log('Share error:', error);
+      console.error('[HomeCleaningDetails] Share error:', error);
     }
   };
 
@@ -107,8 +121,19 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
       ]);
       return;
     }
-    console.log('Opening BookingOverlay for serviceId:', serviceId);
+    console.log('[HomeCleaningDetails] Opening BookingOverlay for serviceId:', serviceId);
     setShowBookingOverlay(true);
+  };
+
+  const handleEmergencyBooking = () => {
+    if (!authState.authenticated) {
+      Alert.alert('Authentication Required', 'Please log in to book an emergency service.', [
+        { text: 'OK', onPress: () => setCurrentPage('Login') },
+      ]);
+      return;
+    }
+    console.log('[HomeCleaningDetails] Opening EmergencyBookingOverlay for serviceId:', serviceId);
+    setShowEmergencyBookingOverlay(true);
   };
 
   const handleMessage = () => {
@@ -126,7 +151,7 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
       if (!service) {
         throw new Error('Service details not available');
       }
-      console.log('Submitting booking with data:', bookingData);
+      console.log('[HomeCleaningDetails] Submitting booking with data:', bookingData);
       const payload = {
         serviceId: service.id,
         date: bookingData.date,
@@ -136,14 +161,16 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
         duration: bookingData.duration,
         notes: bookingData.notes,
         areas: bookingData.areas,
+        serviceType: bookingData.urgencyLevel ? 'emergency' : 'standard',
       };
       const response = await createBooking(payload);
-      console.log('Booking response:', response);
+      console.log('[HomeCleaningDetails] Booking response:', response);
       Alert.alert('Success', 'Booking created successfully!');
       setShowBookingOverlay(false);
+      setShowEmergencyBookingOverlay(false);
       setCurrentPage('Bookings');
     } catch (error: any) {
-      console.error('Booking error:', error);
+      console.error('[HomeCleaningDetails] Booking error:', error);
       Alert.alert('Booking Failed', error.message || 'Failed to create booking. Please try again.');
     }
   };
@@ -217,7 +244,7 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
         <View style={styles.mainContent}>
           <Image
             source={{
-              uri: service.image || 'https://shorturl.at/PEb19',
+              uri: service.image || 'https://via.placeholder.com/140',
             }}
             style={styles.serviceImage}
           />
@@ -227,7 +254,7 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
             <View style={styles.ratingContainer}>
               <Ionicons name="star" size={16} color="#FFD700" />
               <Text style={styles.ratingText}>
-                {calculateAverageRating()} ({service.reviews.length} Reviews)
+                {calculateAverageRating()} ({service.reviews?.length || 0} Reviews)
               </Text>
             </View>
           </View>
@@ -266,7 +293,7 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
                 <View style={styles.detailIcon}>
                   <Ionicons name="home-outline" size={18} color="#27AE60" />
                 </View>
-                <Text style={styles.detailText}>{service.category.name}</Text>
+                <Text style={styles.detailText}>{service.category?.name || 'N/A'}</Text>
               </View>
               <View style={styles.detailItem}>
                 <View style={styles.detailIcon}>
@@ -281,29 +308,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
                 <Text style={styles.detailText}>Professional team</Text>
               </View>
             </View>
-          </View>
-
-          <View style={styles.sectionContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Photos & Videos</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAll}>See All</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.photosScroll}>
-              {[1, 2, 3].map((item) => (
-                <Image
-                  key={item}
-                  source={{
-                    uri: service.image || 'https://shorturl.at/zpU6H',
-                  }}
-                  style={styles.photoThumbnail}
-                />
-              ))}
-            </ScrollView>
           </View>
 
           <View style={styles.sectionContainer}>
@@ -331,14 +335,14 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
                     />
                   ))}
                 </View>
-                <Text style={styles.reviewsCount}>{service.reviews.length} reviews</Text>
+                <Text style={styles.reviewsCount}>{service.reviews?.length || 0} reviews</Text>
               </View>
 
               <View style={styles.reviewsRatingBars}>
                 {[5, 4, 3, 2, 1].map((rating) => {
-                  const count = service.reviews.filter((r) => r.rating === rating).length;
+                  const count = (service.reviews || []).filter((r) => r.rating === rating).length;
                   const percentage =
-                    service.reviews.length > 0 ? (count / service.reviews.length) * 100 : 0;
+                    service.reviews?.length > 0 ? (count / service.reviews.length) * 100 : 0;
                   return (
                     <View key={rating} style={styles.ratingBarRow}>
                       <Text style={styles.ratingBarLabel}>{rating}</Text>
@@ -351,31 +355,46 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
               </View>
             </View>
 
-            {service.reviews.slice(0, showAllReviews ? service.reviews.length : 2).map((review) => (
-              <View key={review.id} style={styles.reviewItem}>
-                <View style={styles.reviewHeader}>
-                  <Image
-                    source={{ uri: 'https://shorturl.at/PEb19' }}
-                    style={styles.reviewerAvatar}
-                  />
-                  <View style={styles.reviewerInfo}>
-                    <Text style={styles.reviewerName}>{review.user.name}</Text>
-                    <View style={styles.reviewRatingRow}>
-                      <View style={{ flexDirection: 'row' }}>{renderStars(review.rating)}</View>
-                      <Text style={styles.reviewDate}>
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </Text>
+            {(service.reviews?.length || 0) === 0 ? (
+              <Text style={styles.noReviewsText}>No reviews yet.</Text>
+            ) : (
+              (service.reviews || [])
+                .slice(0, showAllReviews ? service.reviews.length : 2)
+                .map((review) => (
+                  <View key={review.id} style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                      <Image
+                        source={{
+                          uri: review.user?.profilePic || 'https://via.placeholder.com/40', // Use user profilePic
+                        }}
+                        style={styles.reviewerAvatar}
+                        onError={() =>
+                          console.warn(
+                            `[HomeCleaningDetails] Failed to load image for review ${review.id}`
+                          )
+                        }
+                      />
+                      <View style={styles.reviewerInfo}>
+                        <Text style={styles.reviewerName}>{review.user?.name || 'Anonymous'}</Text>
+                        <View style={styles.reviewRatingRow}>
+                          <View style={{ flexDirection: 'row' }}>{renderStars(review.rating)}</View>
+                          <Text style={styles.reviewDate}>
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
+                    <Text style={styles.reviewComment}>
+                      {review.comment || 'No comment provided.'}
+                    </Text>
                   </View>
-                </View>
-                <Text style={styles.reviewComment}>{review.comment || 'No comment provided.'}</Text>
-              </View>
-            ))}
+                ))
+            )}
 
-            {!showAllReviews && service.reviews.length > 2 && (
+            {!showAllReviews && (service.reviews?.length || 0) > 2 && (
               <TouchableOpacity style={styles.showMoreReviewsButton} onPress={toggleShowAllReviews}>
                 <Text style={styles.showMoreReviewsText}>
-                  Show All Reviews ({service.reviews.length})
+                  Show All Reviews ({service.reviews?.length || 0})
                 </Text>
               </TouchableOpacity>
             )}
@@ -388,6 +407,11 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
             <Text style={styles.messageButtonText}>Message</Text>
           </TouchableOpacity>
 
+          <TouchableOpacity style={styles.emergencyButton} onPress={handleEmergencyBooking}>
+            <Ionicons name="alert-circle-outline" size={20} color="#fff" />
+            <Text style={styles.emergencyButtonText}>Emergency Cleaning</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
             <Text style={styles.bookButtonText}>Book Now</Text>
             <Text style={styles.bookButtonPrice}>NPR {service.price}</Text>
@@ -396,17 +420,30 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({ setCurrentPag
       </ScrollView>
 
       {service && (
-        <BookingOverlay
-          visible={showBookingOverlay}
-          onClose={() => {
-            console.log('Closing BookingOverlay');
-            setShowBookingOverlay(false);
-          }}
-          onSubmit={handleBookingSubmit}
-          servicePrice={service.price}
-          serviceId={service.id}
-          duration={service.duration}
-        />
+        <>
+          <BookingOverlay
+            visible={showBookingOverlay}
+            onClose={() => {
+              console.log('[HomeCleaningDetails] Closing BookingOverlay');
+              setShowBookingOverlay(false);
+            }}
+            onSubmit={handleBookingSubmit}
+            servicePrice={service.price}
+            serviceId={service.id}
+            duration={service.duration}
+          />
+          <EmergencyBookingOverlay
+            visible={showEmergencyBookingOverlay}
+            onClose={() => {
+              console.log('[HomeCleaningDetails] Closing EmergencyBookingOverlay');
+              setShowEmergencyBookingOverlay(false);
+            }}
+            onSubmit={handleBookingSubmit}
+            servicePrice={service.price}
+            serviceId={service.id}
+            duration={service.duration}
+          />
+        </>
       )}
     </SafeAreaView>
   );
@@ -588,15 +625,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  photosScroll: {
-    marginTop: 10,
-  },
-  photoThumbnail: {
-    width: 140,
-    height: 100,
-    borderRadius: 10,
-    marginRight: 12,
-  },
   reviewsSummary: {
     flexDirection: 'row',
     marginBottom: 20,
@@ -699,6 +727,12 @@ const styles = StyleSheet.create({
     color: '#27AE60',
     fontWeight: '500',
   },
+  noReviewsText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginVertical: 20,
+  },
   bottomActions: {
     position: 'absolute',
     bottom: 0,
@@ -731,6 +765,21 @@ const styles = StyleSheet.create({
     color: '#27AE60',
     fontWeight: '500',
   },
+  emergencyButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    marginRight: 10,
+    backgroundColor: '#DC143C',
+    borderRadius: 8,
+  },
+  emergencyButtonText: {
+    marginLeft: 8,
+    color: '#fff',
+    fontWeight: '500',
+  },
   bookButton: {
     flex: 2,
     alignItems: 'center',
@@ -747,7 +796,7 @@ const styles = StyleSheet.create({
   bookButtonPrice: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 4,
   },
   loadingContainer: {
     flex: 1,

@@ -1,6 +1,12 @@
 const { validationResult } = require("express-validator");
 const prisma = require("../prisma/prisma");
 const axios = require("axios");
+const BookingStatus = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+};
 
 const createBooking = async (req, res) => {
   if (!req.user || !req.user.id) {
@@ -127,9 +133,10 @@ const createBooking = async (req, res) => {
       pidx = paymentResponse.data.pidx;
     }
 
+    // In createBooking function
     const cleaners = await prisma.cleaner.findMany({
       where: {
-        // Add filters like availability or location if needed
+        // Add any filters for availability
       },
     });
 
@@ -143,6 +150,7 @@ const createBooking = async (req, res) => {
       });
     }
 
+    // For now, keep random selection; consider workload-based selection in production
     const selectedCleaner =
       cleaners[Math.floor(Math.random() * cleaners.length)];
 
@@ -194,6 +202,38 @@ const createBooking = async (req, res) => {
           },
         },
       });
+
+      // Create a conversation and notify the cleaner
+      let conversation = await tx.conversation.findFirst({
+        where: {
+          userId: userId,
+          cleanerId: selectedCleaner.id,
+          serviceId,
+          isGroup: false,
+        },
+      });
+
+      if (!conversation) {
+        conversation = await tx.conversation.create({
+          data: {
+            userId,
+            cleanerId: selectedCleaner.id,
+            serviceId,
+            isGroup: false,
+          },
+        });
+      }
+
+      // Send notification message to cleaner
+      await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderId: userId,
+          senderType: "User",
+          content: `New booking request for ${service.name} on ${bookingDate.toLocaleDateString()} at ${time}. Please accept or decline.`,
+        },
+      });
+
       return newBooking;
     });
 
@@ -412,14 +452,14 @@ const updateBookingStatus = async (req, res) => {
 
 const getCleanerBookings = async (req, res) => {
   try {
-    const { status } = req.query;
+    const cleanerId = req.user.id;
     const where = {
-      cleanerId: req.user.id,
+      cleanerId,
     };
 
-    if (status) {
-      where.status = status;
-    }
+    // if (status) {
+    //   where.status = status;
+    // }
 
     const bookings = await prisma.booking.findMany({
       where,
@@ -466,12 +506,10 @@ const updateCleanerBookingStatus = async (req, res) => {
     const { status } = req.body;
     const cleanerId = req.user.id;
 
-    if (!["CONFIRMED", "CANCELLED", "COMPLETED"].includes(status)) {
+    if (!status || !Object.values(BookingStatus).includes(status)) {
       return res.status(400).json({
         success: false,
-        error: "Invalid status",
-        validStatuses: ["CONFIRMED", "CANCELLED", "COMPLETED"],
-        code: "INVALID_STATUS",
+        message: "Invalid or missing status",
       });
     }
 
@@ -512,13 +550,13 @@ const updateCleanerBookingStatus = async (req, res) => {
 
     // Validate status transition
     const validTransitions = {
-      PENDING: ["CONFIRMED", "CANCELLED"],
-      CONFIRMED: ["COMPLETED", "CANCELLED"],
+      PENDING: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
+      CONFIRMED: [BookingStatus.COMPLETED, BookingStatus.CANCELLED],
       COMPLETED: [],
       CANCELLED: [],
     };
 
-    if (!validTransitions[booking.status].includes(status)) {
+    if (!validTransitions[booking.status]?.includes(status)) {
       return res.status(400).json({
         success: false,
         error: "Invalid status transition",
@@ -579,13 +617,43 @@ const updateCleanerBookingStatus = async (req, res) => {
           });
         }
 
-        // Send automatic message
+        // Send confirmation message
         await tx.message.create({
           data: {
             conversationId: conversation.id,
             senderId: cleanerId,
             senderType: "Cleaner",
-            content: `Hello ${booking.user.name}, I am your cleaner for the ${booking.service.name} service. Looking forward to assisting you!`,
+            content: `Hello ${booking.user.name}, I have confirmed your booking for ${booking.service.name} on ${new Date(booking.date).toLocaleDateString()} at ${booking.time}. Looking forward to assisting you!`,
+          },
+        });
+      } else if (status === "CANCELLED") {
+        // Notify user of cancellation
+        let conversation = await tx.conversation.findFirst({
+          where: {
+            userId: booking.userId,
+            cleanerId,
+            serviceId: booking.serviceId,
+            isGroup: false,
+          },
+        });
+
+        if (!conversation) {
+          conversation = await tx.conversation.create({
+            data: {
+              userId: booking.userId,
+              cleanerId,
+              serviceId: booking.serviceId,
+              isGroup: false,
+            },
+          });
+        }
+
+        await tx.message.create({
+          data: {
+            conversationId: conversation.id,
+            senderId: cleanerId,
+            senderType: "Cleaner",
+            content: `Hello ${booking.user.name}, I regret to inform you that I have to cancel your booking for ${booking.service.name} on ${new Date(booking.date).toLocaleDateString()} at ${booking.time}. Please contact support for further assistance.`,
           },
         });
       }

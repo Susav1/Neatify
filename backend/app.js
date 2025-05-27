@@ -12,11 +12,11 @@ const categoryRoute = require("./routes/categoryRoute");
 const documentRouter = require("./routes/documentRouter");
 const messageRouter = require("./routes/messageRouter");
 const profileRouter = require("./routes/profileRouter");
+const reviewRouter = require("./routes/reviewRouter");
 const path = require("path");
 const fs = require("fs");
 const { upload } = require("./middlewares/upload");
 
-// Create Uploads/icons directory if it doesn't exist
 const uploadsDir = path.join(__dirname, "Uploads/icons");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -33,8 +33,8 @@ app.use(
       "http://localhost:8081",
       "http://localhost:5173",
       "http://10.0.2.2:8081",
-      "http://localhost:19006", // Expo web port
-      "http://192.168.1.100:8081", // Replace with your machine's IP
+      "http://localhost:19006",
+      "http://192.168.1.100:8081",
     ],
     credentials: true,
   })
@@ -50,7 +50,7 @@ app.use("/api/bookings", bookingRouter);
 app.use("/category", categoryRoute);
 app.use("/api/messages", messageRouter);
 app.use("/profile", profileRouter);
-
+app.use("/api/reviews", reviewRouter);
 app.use(
   "/uploads/icons",
   express.static(path.join(__dirname, "Uploads/icons"))

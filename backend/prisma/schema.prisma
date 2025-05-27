@@ -87,6 +87,7 @@ model Booking {
   pidx          String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  reviews       Review[]
 }
 
 model Category {
@@ -104,10 +105,13 @@ model Review {
   user      User?    @relation(fields: [userId], references: [id])
   serviceId String?
   service   Service? @relation(fields: [serviceId], references: [id])
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id])
   createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([serviceId])
+  @@index([bookingId])
 }
 
 model Conversation {

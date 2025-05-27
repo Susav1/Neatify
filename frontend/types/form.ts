@@ -66,6 +66,7 @@ export interface User {
   email: string;
   profilePicture?: string;
   phone?: string;
+  role?: string; // Added role
 }
 
 export interface AuthProps {
