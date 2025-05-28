@@ -68,12 +68,16 @@ const ForgotPassword = () => {
 
   return (
     <View style={styles.container}>
-      <Text variant="headlineMedium" style={styles.title}>Neatify</Text>
+      <Text variant="headlineMedium" style={styles.title}>
+        Neatify
+      </Text>
       <Text style={styles.tagline}>Book a Clean, Live Serene!</Text>
 
       {step === 'email' && (
         <>
-          <Text variant="titleMedium" style={styles.header}>Forgot Password</Text>
+          <Text variant="titleMedium" style={styles.header}>
+            Forgot Password
+          </Text>
           <Text style={styles.subtitle}>Enter your email to reset your password.</Text>
 
           <Controller
@@ -109,7 +113,9 @@ const ForgotPassword = () => {
 
       {step === 'verify' && (
         <>
-          <Text variant="titleMedium" style={styles.header}>Verify Code</Text>
+          <Text variant="titleMedium" style={styles.header}>
+            Verify Code
+          </Text>
           <Text style={styles.subtitle}>Enter the code sent to your email.</Text>
 
           <TextInput
@@ -129,7 +135,9 @@ const ForgotPassword = () => {
 
       {step === 'reset' && (
         <>
-          <Text variant="titleMedium" style={styles.header}>Reset Password</Text>
+          <Text variant="titleMedium" style={styles.header}>
+            Reset Password
+          </Text>
           <Text style={styles.subtitle}>Enter a new password below.</Text>
 
           <Controller
@@ -185,7 +193,9 @@ const ForgotPassword = () => {
             )}
             name="confirmPassword"
           />
-          {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>}
+          {errors.confirmPassword && (
+            <Text style={styles.errorText}>{errors.confirmPassword.message}</Text>
+          )}
 
           <Button mode="contained" onPress={handleSubmit(onChangePassword)} style={styles.button}>
             Change Password

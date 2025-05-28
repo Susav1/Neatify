@@ -244,7 +244,7 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({
         <View style={styles.mainContent}>
           <Image
             source={{
-              uri: service.image || 'https://via.placeholder.com/140',
+              uri: service.image || 'https://shorturl.at/PEb19',
             }}
             style={styles.serviceImage}
           />
@@ -365,7 +365,7 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({
                     <View style={styles.reviewHeader}>
                       <Image
                         source={{
-                          uri: review.user?.profilePic || 'https://via.placeholder.com/40', // Use user profilePic
+                          uri: review.user?.profilePic || 'https://via.placeholder.com/40',
                         }}
                         style={styles.reviewerAvatar}
                         onError={() =>
@@ -409,7 +409,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({
 
           <TouchableOpacity style={styles.emergencyButton} onPress={handleEmergencyBooking}>
             <Ionicons name="alert-circle-outline" size={20} color="#fff" />
-            <Text style={styles.emergencyButtonText}>Emergency Cleaning</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
@@ -438,10 +437,6 @@ const HomeCleaningDetails: React.FC<CleaningServiceViewProps> = ({
               console.log('[HomeCleaningDetails] Closing EmergencyBookingOverlay');
               setShowEmergencyBookingOverlay(false);
             }}
-            onSubmit={handleBookingSubmit}
-            servicePrice={service.price}
-            serviceId={service.id}
-            duration={service.duration}
           />
         </>
       )}
@@ -766,7 +761,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   emergencyButton: {
-    flex: 1,
+    flex: 0.5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

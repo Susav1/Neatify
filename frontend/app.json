@@ -23,7 +23,9 @@
       },
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ],
       "package": "com.anonymous.ceuapp"
     },
@@ -47,8 +49,14 @@
         {
           "configureAndroidBackup": true
         }
-    ]
-  ],
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "We need your location to set the service address"
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }

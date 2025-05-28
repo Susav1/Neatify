@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 
 interface Service {
+  id?: string;
   name: string;
   description: string;
   price: number;
@@ -17,12 +18,32 @@ interface Category {
 }
 
 interface Props {
-  setCurrentPage: (page: string) => void;
+  setCurrentPage: (page: string, params?: any) => void;
   category: Category;
+  setSelectedServiceId?: (serviceId: string) => void;
 }
 
-const CategoryHome: React.FC<Props> = ({ setCurrentPage, category }) => {
+const CategoryHome: React.FC<Props> = ({ setCurrentPage, category, setSelectedServiceId }) => {
   const services = category?.services || [];
+
+  const handleServicePress = (service: Service, index: number) => {
+    // Create a unique service ID if one doesn't exist
+    const serviceId = service.id || `${category.id}-service-${index}`;
+
+    console.log('CategoryHome - Service pressed:', {
+      serviceName: service.name,
+      serviceId: serviceId,
+      originalService: service,
+    });
+
+    // Set the selected service ID
+    if (setSelectedServiceId) {
+      setSelectedServiceId(serviceId);
+    }
+
+    // Navigate to HomeCleaningDetails
+    setCurrentPage('HomeCleaningDetails');
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -38,28 +59,32 @@ const CategoryHome: React.FC<Props> = ({ setCurrentPage, category }) => {
           No services found in this category.
         </Text>
       ) : (
-        services.map((service: Service, index: number) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.serviceCard}
-            onPress={() => setCurrentPage('SericeDetail')}>
-            <Image
-              source={{ uri: service.image || 'https://via.placeholder.com/100' }}
-              style={styles.serviceImage}
-            />
-            <View style={styles.serviceInfo}>
-              <Text style={styles.serviceName}>{service.name}</Text>
-              <Text style={styles.serviceDescription}>{service.description}</Text>
-              <View style={styles.serviceFooter}>
-                <Text style={styles.servicePrice}>${service.price}</Text>
-                <View style={styles.ratingContainer}>
-                  <Ionicons name="star" size={16} color="#FFD700" />
-                  <Text style={styles.ratingText}>4.5</Text>
+        services.map((service: Service, index: number) => {
+          const serviceId = service.id || `${category.id}-service-${index}`;
+
+          return (
+            <TouchableOpacity
+              key={serviceId}
+              style={styles.serviceCard}
+              onPress={() => handleServicePress(service, index)}>
+              <Image
+                source={{ uri: service.image || 'https://via.placeholder.com/100' }}
+                style={styles.serviceImage}
+              />
+              <View style={styles.serviceInfo}>
+                <Text style={styles.serviceName}>{service.name}</Text>
+                <Text style={styles.serviceDescription}>{service.description}</Text>
+                <View style={styles.serviceFooter}>
+                  <Text style={styles.servicePrice}>${service.price}</Text>
+                  <View style={styles.ratingContainer}>
+                    <Ionicons name="star" size={16} color="#FFD700" />
+                    <Text style={styles.ratingText}>4.5</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))
+            </TouchableOpacity>
+          );
+        })
       )}
     </ScrollView>
   );

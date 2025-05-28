@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,10 +13,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { getUserBookings, updateBookingStatus } from '../services/booking.service';
-import { submitReview } from '../services/review.service'; // Import review service
+import { submitReview } from '../services/review.service';
 import { useAuth } from '../context/auth-context';
 import Khalti from './khalti/Khalti';
-import ReviewOverlay from './ReviewOverlay'; // Import ReviewOverlay
+import ReviewOverlay from './ReviewOverlay';
 
 export interface Booking {
   id: string;
@@ -35,7 +38,7 @@ const Bookings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showKhaltiPayment, setShowKhaltiPayment] = useState(false);
-  const [showReviewOverlay, setShowReviewOverlay] = useState(false); // New state for review overlay
+  const [showReviewOverlay, setShowReviewOverlay] = useState(false);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -559,11 +562,10 @@ const styles = StyleSheet.create({
   },
   paymentButtonsContainer: {
     marginTop: 20,
-    flexDirection: 'column',
-    gap: 10,
+    gap: 12,
   },
   modalActionButton: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: 'center',
@@ -573,9 +575,6 @@ const styles = StyleSheet.create({
   },
   cancelButton1: {
     backgroundColor: '#FF4500',
-  },
-  reviewButton1: {
-    backgroundColor: '#27AE60',
   },
   modalActionButtonText: {
     color: 'white',

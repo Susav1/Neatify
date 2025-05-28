@@ -42,7 +42,7 @@ const AppLayout = () => {
           } else if (route.name === 'Messages') {
             iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
           } else {
-            iconName = 'home'; // Fallback icon
+            iconName = 'home';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;

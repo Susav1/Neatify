@@ -36,7 +36,7 @@ const Login = ({ setIsLoggedIn }) => {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         setIsLoggedIn(true);
-        navigate("/dashboard");
+        navigate("/user-management");
       } else {
         setError(data.message || "Invalid credentials");
       }

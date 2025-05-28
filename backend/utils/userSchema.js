@@ -9,33 +9,6 @@ const registerSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: RoleEnum.default("User"),
-  // licenseNumber: z
-  //   .string()
-  //   .optional()
-  //   .refine((val, ctx) => {
-  //     console.log("License Number:", ctx); // Debugging line
-  //     const role = ctx.parent.role;
-  //     if (role === "Cleaner" && !val) {
-  //       return ctx.addIssue({
-  //         code: z.ZodIssueCode.custom,
-  //         message: "Cleaners must provide a license number",
-  //       });
-  //     }
-  //     return true;
-  //   }),
-  // phone: z
-  //   .string()
-  //   .optional()
-  //   .refine((val, ctx) => {
-  //     const role = ctx.parent.role;
-  //     if (role === "Cleaner" && !val) {
-  //       return ctx.addIssue({
-  //         code: z.ZodIssueCode.custom,
-  //         message: "Cleaners must provide a phone number",
-  //       });
-  //     }
-  //     return true; // Valid phone number or not provided
-  //   }, "Invalid phone number format"),
 });
 
 // Login Schema

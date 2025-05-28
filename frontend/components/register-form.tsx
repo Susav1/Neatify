@@ -20,7 +20,8 @@ const RegisterForm = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'User',
+      role: 'User', // Default role as per RegisterFormData
+      phone: '',
     },
   });
 
@@ -41,7 +42,7 @@ const RegisterForm = () => {
           name: data.name,
           email: data.email,
           password: data.password,
-          role: 'User',
+          role: data.role, // Include required role field
         },
         {
           onSuccess: (response) => {
@@ -129,6 +130,31 @@ const RegisterForm = () => {
         name="email"
       />
       {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
+
+      <Controller
+        control={control}
+        rules={{
+          required: 'Phone number is required',
+          pattern: {
+            value: /^\d{10}$/,
+            message: 'Please enter a valid 10-digit phone number',
+          },
+        }}
+        render={({ field: { onChange, onBlur, value } }) => (
+          <TextInput
+            onBlur={onBlur}
+            onChangeText={onChange}
+            placeholder="Phone Number"
+            value={value}
+            keyboardType="phone-pad"
+            mode="outlined"
+            style={styles.input}
+            error={!!errors.phone}
+          />
+        )}
+        name="phone"
+      />
+      {errors.phone && <Text style={styles.errorText}>{errors.phone.message}</Text>}
 
       <Controller
         control={control}

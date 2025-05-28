@@ -38,9 +38,9 @@ const CleanerManagement = () => {
   }, []);
 
   return (
-    <div className="user-management-container">
+    <div className="cleaner-management-container">
       <div className="header-section">
-        <h2 className="user-management-title">Cleaner Management</h2>
+        <h2 className="cleaner-management-title">Cleaner Management</h2>
         <div className="controls">
           <div className="search-container">
             <svg className="search-icon" viewBox="0 0 24 24">
@@ -90,12 +90,6 @@ const CleanerManagement = () => {
           </div>
           <div className="stat-label">Inactive</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-value">
-            {cleaners.filter((c) => c.licenseNumber).length}
-          </div>
-          <div className="stat-label">Licensed</div>
-        </div>
       </div>
 
       <div className="table-container">
@@ -122,7 +116,6 @@ const CleanerManagement = () => {
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>License</th>
                 <th>CreatedAt</th>
                 <th>Actions</th>
               </tr>
@@ -139,9 +132,6 @@ const CleanerManagement = () => {
                       <a href={`mailto:${cleaner.email}`}>{cleaner.email}</a>
                     </td>
                     <td className="user-phone">{cleaner.phone || "N/A"}</td>
-                    <td className="user-license">
-                      {cleaner.licenseNumber || "Not Licensed"}
-                    </td>
                     <td>
                       <div className="date-cell">
                         <div className="date">

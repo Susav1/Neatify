@@ -127,8 +127,8 @@ const Messages: React.FC<MessagesProps> = ({ setCurrentPage }) => {
         </View>
         <Text style={tw`text-gray-600`}>{item.messages[0]?.content || 'No messages'}</Text>
         {item.messages.length > 0 && (
-          <View style={tw`bg-green-500 rounded-full px-2 py-1 mt-1`}>
-            <Text style={tw`text-white text-xs`}>1</Text>
+          <View style={tw`bg-green-500 rounded-full px-1 py-0.5 mt-1`}>
+            <Text style={tw`text-white text-xs`}>1 message</Text>
           </View>
         )}
       </View>

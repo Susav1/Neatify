@@ -31,6 +31,7 @@ const HomePage = () => {
       try {
         const response = await fetch('http://localhost:5000/services');
         const data = await response.json();
+        console.log('Fetched categories data:', data);
         setCategories(data);
       } catch (error) {
         console.error('Failed to fetch home data:', error);
@@ -42,9 +43,20 @@ const HomePage = () => {
   }, []);
 
   const handleServicePress = (service) => {
+    console.log('HomePage - Service pressed:', service);
     setSelectedServiceId(service.id);
     setCurrentPage('HomeCleaningDetails');
   };
+
+  const handleSetSelectedServiceId = (serviceId) => {
+    console.log('HomePage - Setting selected service ID:', serviceId);
+    setSelectedServiceId(serviceId);
+  };
+
+  // Add debugging for selectedServiceId changes
+  useEffect(() => {
+    console.log('HomePage - selectedServiceId changed to:', selectedServiceId);
+  }, [selectedServiceId]);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -86,7 +98,7 @@ const HomePage = () => {
                     .flatMap((cat) => cat.services || [])
                     .map((service, index) => (
                       <TouchableOpacity
-                        key={index}
+                        key={service.id || `service-${index}`}
                         style={styles.taskCard}
                         onPress={() => handleServicePress(service)}>
                         <Text style={styles.taskTitle}>{service.name}</Text>
@@ -106,6 +118,7 @@ const HomePage = () => {
                       key={cat.id}
                       style={styles.categoryCard}
                       onPress={() => {
+                        console.log('Category selected:', cat);
                         setSelectedCategory(cat);
                         setCurrentPage('CategoryHome');
                       }}>
@@ -132,11 +145,18 @@ const HomePage = () => {
       case 'Profile':
         return <Profile />;
       case 'HomeCleaningDetails':
+        console.log('Rendering HomeCleaningDetails with serviceId:', selectedServiceId);
         return (
           <HomeCleaningDetails setCurrentPage={setCurrentPage} serviceId={selectedServiceId} />
         );
       case 'CategoryHome':
-        return <CategoryHome setCurrentPage={setCurrentPage} category={selectedCategory} />;
+        return (
+          <CategoryHome
+            setCurrentPage={setCurrentPage}
+            category={selectedCategory}
+            setSelectedServiceId={handleSetSelectedServiceId}
+          />
+        );
       case 'Chat':
         return <Chat setCurrentPage={setCurrentPage} serviceId={selectedServiceId} />;
       default:
